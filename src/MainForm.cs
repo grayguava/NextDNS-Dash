@@ -15,9 +15,21 @@ class MainForm : Form
     {
         Text = ""; // caption shows icon + buttons only
         Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-        Width = 1035;
-        Height = 665;
-        StartPosition = FormStartPosition.CenterScreen;
+
+        State.Load();
+        if (State.HasBounds)
+        {
+            StartPosition = FormStartPosition.Manual;
+            Bounds = State.Bounds;
+            if (State.Maximized) WindowState = FormWindowState.Maximized;
+        }
+        else
+        {
+            Width = 1035;
+            Height = 665;
+            StartPosition = FormStartPosition.CenterScreen;
+        }
+
         web.Dock = DockStyle.Fill;
         Controls.Add(web);
         Load += OnLoad;
@@ -103,6 +115,21 @@ class MainForm : Form
                 core.Reload();
         };
 
-        core.Navigate(StartUrl);
+        core.NavigationCompleted += delegate(object s, CoreWebView2NavigationCompletedEventArgs args)
+        {
+            if (args.IsSuccess)
+            {
+                State.SaveUrl(core.Source);
+                State.Save(this);
+            }
+        };
+
+        core.Navigate(State.LastUrl ?? StartUrl);
+    }
+
+    protected override void OnFormClosing(FormClosingEventArgs e)
+    {
+        State.Save(this);
+        base.OnFormClosing(e);
     }
 }

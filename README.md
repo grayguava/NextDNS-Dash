@@ -51,6 +51,7 @@ system-wide runtime.
 - All permission requests (camera, microphone, notifications, geolocation) are
   denied.
 - A second launch focuses the existing window instead of starting another copy.
+- Remembers its window position, size and the last dashboard page between launches.
 - DevTools, the status bar, password autosave, and general autofill are off.
 - The title bar shows the app icon and window buttons only. Windows 11 colours
   it exactly `#212529`; Windows 10 uses the same tint via the frame accent

@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - VERSION
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $versionPath = "VERSION"
+          if (-not (Test-Path -LiteralPath $versionPath)) {
+            throw "VERSION file not found"
+          }
+          $raw = [string](Get-Content -LiteralPath $versionPath -Raw)
+          $raw = $raw.Trim()
+          if ($raw -notmatch '^v?(\d+\.\d+\.\d+)$') {
+            throw "VERSION must look like 1.0.0 or v1.0.0."
+          }
+          $version = $Matches[1]
+          $tag = "v$version"
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Check tag
+        shell: pwsh
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $existing = git ls-remote --tags origin "refs/tags/$env:TAG"
+          if ($LASTEXITCODE -ne 0) { throw "git ls-remote failed" }
+          if ($existing) { throw "Tag $env:TAG already exists. Bump VERSION." }
+
+      - name: Build
+        shell: pwsh
+        run: cmd /c build.bat
+
+      - name: Package
+        shell: pwsh
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $stage = "release/NextDNS-Dash"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+
+          $files = @(
+            "bin/NextDNS-Dash.exe",
+            "bin/Microsoft.Web.WebView2.Core.dll",
+            "bin/Microsoft.Web.WebView2.WinForms.dll",
+            "bin/WebView2Loader.dll",
+            "README.md"
+          )
+          foreach ($file in $files) {
+            if (-not (Test-Path -LiteralPath $file)) { throw "Missing $file" }
+            Copy-Item -LiteralPath $file -Destination $stage
+          }
+          if (Test-Path -LiteralPath "LICENSE") {
+            Copy-Item -LiteralPath "LICENSE" -Destination $stage
+          }
+
+          $zip = "release/$($env:TAG)_x64.zip"
+          Compress-Archive -Path "$stage/*" -DestinationPath $zip -CompressionLevel Optimal
+
+          $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($env:TAG)_x64.zip" | Set-Content -LiteralPath "$zip.sha256" -Encoding ascii
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nextdns-dash-x64-${{ steps.version.outputs.version }}
+          path: |
+            release/*.zip
+            release/*.sha256
+          if-no-files-found: error
+
+      - name: Create draft release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $assets = @(Get-ChildItem "release" -File | ForEach-Object { $_.FullName })
+          $notes = Get-Content ".github/RELEASE_TEMPLATE.md" -Raw
+          $notes = $notes.Replace("<commit>", $env:GITHUB_SHA).Replace("<tag>", $env:TAG)
+          $notesPath = Join-Path $env:RUNNER_TEMP "release-notes.md"
+          Set-Content -LiteralPath $notesPath -Value $notes -Encoding utf8
+          gh release create $env:TAG @assets `
+            --draft --target $env:GITHUB_SHA --title $env:TAG `
+            --notes-file $notesPath
+          if ($LASTEXITCODE -ne 0) { throw "gh release create failed" }

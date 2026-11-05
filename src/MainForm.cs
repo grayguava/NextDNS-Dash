@@ -60,8 +60,7 @@ class MainForm : Form
             return;
         }
 
-        string profileDir = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory, "data", "profile");
+        string profileDir = Path.Combine(Program.DataDirectory, "profile");
 
         CoreWebView2Environment env =
             await CoreWebView2Environment.CreateAsync(null, profileDir);

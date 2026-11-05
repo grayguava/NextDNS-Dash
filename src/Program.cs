@@ -8,6 +8,9 @@ using System.Windows.Forms;
 
 static class Program
 {
+    internal static readonly string DataDirectory =
+        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data");
+
     [DllImport("user32.dll")]
     static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
@@ -37,12 +40,11 @@ static class Program
         }
     }
 
-    // The release layout keeps the WebView2 files in a sibling DLLs folder, which
+    // The release layout keeps the WebView2 files in a DLLs subfolder, which
     // neither the CLR nor the native loader searches by default.
     static void LoadBundledAssemblies()
     {
-        string dllDir = Path.GetFullPath(
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "DLLs"));
+        string dllDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DLLs");
         if (!Directory.Exists(dllDir)) return;
 
         AppDomain.CurrentDomain.AssemblyResolve += delegate(object sender, ResolveEventArgs args)

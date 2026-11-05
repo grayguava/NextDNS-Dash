@@ -6,7 +6,7 @@ on:
       - master
       - main
     paths:
-      - VERSION
+      - version
   workflow_dispatch:
 
 permissions:
@@ -29,14 +29,14 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $versionPath = "VERSION"
+          $versionPath = "version"
           if (-not (Test-Path -LiteralPath $versionPath)) {
-            throw "VERSION file not found"
+            throw "version file not found"
           }
           $raw = [string](Get-Content -LiteralPath $versionPath -Raw)
           $raw = $raw.Trim()
           if ($raw -notmatch '^v?(\d+\.\d+\.\d+)$') {
-            throw "VERSION must look like 1.0.0 or v1.0.0."
+            throw "version must look like 1.0.0 or v1.0.0."
           }
           $version = $Matches[1]
           $tag = "v$version"
@@ -64,17 +64,13 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $root = "release/nextdns-dash"
-          $app = "$root/app_x64"
           $dll = "$root/DLLs"
-          New-Item -ItemType Directory -Force -Path $app, $dll | Out-Null
+          New-Item -ItemType Directory -Force -Path $dll, "$root/config" | Out-Null
 
-          $appFiles = @(
-            "bin/app_x64/NextDNS-Dash.exe"
-          )
-          foreach ($file in $appFiles) {
-            if (-not (Test-Path -LiteralPath $file)) { throw "Missing $file" }
-            Copy-Item -LiteralPath $file -Destination $app
+          if (-not (Test-Path -LiteralPath "bin/NextDNS-Dash.exe")) {
+            throw "Missing bin/NextDNS-Dash.exe"
           }
+          Copy-Item -LiteralPath "bin/NextDNS-Dash.exe" -Destination $root
 
           $dllFiles = @(
             "bin/DLLs/Microsoft.Web.WebView2.Core.dll",
@@ -86,8 +82,8 @@ jobs:
             Copy-Item -LiteralPath $file -Destination $dll
           }
 
-          foreach ($file in @("README.md", "LICENSE", "Documentation.url")) {
-            if (Test-Path -LiteralPath $file) { Copy-Item -LiteralPath $file -Destination $root }
+          if (Test-Path -LiteralPath "LICENSE") {
+            Copy-Item -LiteralPath "LICENSE" -Destination $root
           }
 
           $zip = "release/$($env:TAG)_x64.zip"

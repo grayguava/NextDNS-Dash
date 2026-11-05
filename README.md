@@ -24,9 +24,10 @@ the same folder.
 bin\NextDNS-Dash.exe
 ```
 
-The first launch creates `bin\data\profile` and stores the session there, so the
-folder can be copied to another machine and stay logged in. Deleting `data`
-resets the app to a fresh login.
+The first launch creates `data\profile` beside the exe, next to `DLLs\` and
+`config\`, and stores the session there, so the whole folder can be copied to
+another machine and stay logged in. Deleting `data` resets the app to a fresh
+login.
 
 ## Build
 
@@ -35,9 +36,11 @@ build.bat
 ```
 
 Compiles `src\*.cs` into `bin\NextDNS-Dash.exe`, embeds `assets\icon.ico`, and
-copies the WebView2 assemblies from `lib\`. The `lib\` DLLs are the managed
-wrapper only (`Microsoft.Web.WebView2` 1.0.4314.35); the Chromium engine itself
-comes from the system-wide runtime.
+copies the WebView2 assemblies from `lib\` into `bin\DLLs\`. The app resolves
+both managed and native runtime files from that subfolder, so the release zip
+keeps the package root tidy. The `lib\` DLLs are the managed wrapper only
+(`Microsoft.Web.WebView2` 1.0.4314.35); the Chromium engine itself comes from the
+system-wide runtime.
 
 ## Behaviour
 

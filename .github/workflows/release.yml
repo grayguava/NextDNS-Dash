@@ -63,26 +63,35 @@ jobs:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           $ErrorActionPreference = "Stop"
-          $stage = "release/NextDNS-Dash"
-          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          $root = "release/nextdns-dash"
+          $app = "$root/app_x64"
+          $dll = "$root/DLLs"
+          New-Item -ItemType Directory -Force -Path $app, $dll | Out-Null
 
-          $files = @(
-            "bin/NextDNS-Dash.exe",
-            "bin/Microsoft.Web.WebView2.Core.dll",
-            "bin/Microsoft.Web.WebView2.WinForms.dll",
-            "bin/WebView2Loader.dll",
-            "README.md"
+          $appFiles = @(
+            "bin/app_x64/NextDNS-Dash.exe"
           )
-          foreach ($file in $files) {
+          foreach ($file in $appFiles) {
             if (-not (Test-Path -LiteralPath $file)) { throw "Missing $file" }
-            Copy-Item -LiteralPath $file -Destination $stage
+            Copy-Item -LiteralPath $file -Destination $app
           }
-          if (Test-Path -LiteralPath "LICENSE") {
-            Copy-Item -LiteralPath "LICENSE" -Destination $stage
+
+          $dllFiles = @(
+            "bin/DLLs/Microsoft.Web.WebView2.Core.dll",
+            "bin/DLLs/Microsoft.Web.WebView2.WinForms.dll",
+            "bin/DLLs/WebView2Loader.dll"
+          )
+          foreach ($file in $dllFiles) {
+            if (-not (Test-Path -LiteralPath $file)) { throw "Missing $file" }
+            Copy-Item -LiteralPath $file -Destination $dll
+          }
+
+          foreach ($file in @("README.md", "LICENSE", "Documentation.url")) {
+            if (Test-Path -LiteralPath $file) { Copy-Item -LiteralPath $file -Destination $root }
           }
 
           $zip = "release/$($env:TAG)_x64.zip"
-          Compress-Archive -Path "$stage/*" -DestinationPath $zip -CompressionLevel Optimal
+          Compress-Archive -Path $root -DestinationPath $zip -CompressionLevel Optimal
 
           $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $($env:TAG)_x64.zip" | Set-Content -LiteralPath "$zip.sha256" -Encoding ascii

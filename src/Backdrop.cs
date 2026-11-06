@@ -14,7 +14,9 @@ static class Backdrop
 
     const int RGB = 0x212529;
     const int WCA_ACCENT_POLICY = 19;
-    const int ACCENT_ENABLE_ACRYLICBLURBEHIND = 4;
+    // The tint is opaque, so the gradient state paints the same colour as acrylic
+    // without the per-frame blur cost that makes dragging and resizing lag on Win10.
+    const int ACCENT_ENABLE_GRADIENT = 1;
     const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
     const int DWMWA_BORDER_COLOR = 34;
     const int DWMWA_CAPTION_COLOR = 35;
@@ -59,7 +61,7 @@ static class Backdrop
         int opaque = unchecked((int)(0xFF000000u | (uint)((b << 16) | (g << 8) | r)));
         var accent = new AccentPolicy
         {
-            State = ACCENT_ENABLE_ACRYLICBLURBEHIND,
+            State = ACCENT_ENABLE_GRADIENT,
             Flags = 0,
             GradientColor = opaque,
             AnimationId = 0

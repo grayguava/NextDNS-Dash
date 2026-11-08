@@ -180,6 +180,7 @@ class MainForm : Form
         CoreWebView2Settings st = c.Settings;
         st.AreDevToolsEnabled = false;
         st.IsStatusBarEnabled = false;
+        st.AreDefaultContextMenusEnabled = false;
         st.IsPasswordAutosaveEnabled = false;
         st.IsGeneralAutofillEnabled = false;
         // Otherwise Chromium paints its own error page until NavigationCompleted

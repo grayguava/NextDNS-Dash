@@ -81,9 +81,9 @@ config\      created when a setting changes
   renderer crash.
 - If the dashboard is unreachable, a short offline page offers **Back to home**
   and retries automatically when the network returns.
-- Page right-click keeps the native Chromium menu. The title bar carries the
-  icon and window buttons only: icon or caption right-click, and `Alt+Space`,
-  do nothing.
+- Right-click is disabled throughout the app. The title bar carries the icon
+  and window buttons only: icon or caption right-click, and `Alt+Space`, do
+  nothing. Keyboard shortcuts still work.
 - DevTools, the status bar, password autosave and general autofill are off.
   The window title is empty, so title-based password-manager auto-type has
   nothing to match.

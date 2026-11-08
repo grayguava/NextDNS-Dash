@@ -89,10 +89,11 @@ class MainForm : Form
     protected override void WndProc(ref Message m)
     {
         // The window menu is disabled: the caption keeps only the minimize,
-        // maximize and close buttons. Every path that would open it is dropped.
+        // maximize and close buttons. Clicking the icon returns to Home.
         if (m.Msg == WM_NCLBUTTONDOWN && (int)m.WParam == HTSYSMENU)
         {
             Activate();
+            GoHome();
             m.Result = IntPtr.Zero;
             return;
         }
@@ -101,6 +102,15 @@ class MainForm : Form
         if (m.Msg == WM_NCLBUTTONDBLCLK && (int)m.WParam == HTSYSMENU)
         {
             Activate();
+            GoHome();
+            m.Result = IntPtr.Zero;
+            return;
+        }
+
+        if (m.Msg == WM_NCRBUTTONDOWN && (int)m.WParam == HTSYSMENU)
+        {
+            Activate();
+            GoHome();
             m.Result = IntPtr.Zero;
             return;
         }
@@ -132,6 +142,13 @@ class MainForm : Form
         }
 
         base.WndProc(ref m);
+    }
+
+    void GoHome()
+    {
+        if (core == null || closing) return;
+        try { core.Navigate(WebUi.IsAvailable ? WebUi.HomeUrl : StartUrl); }
+        catch (Exception) { }
     }
 
     async void OnLoad(object sender, EventArgs e)

@@ -1,9 +1,9 @@
 # NextDNS-Dash
 
-Portable Windows desktop wrapper around the [NextDNS](https://my.nextdns.io) dashboard.
-One small exe, no installer, no background service: it opens the dashboard in a
-native window backed by the WebView2 runtime and keeps its browsing profile in
-the same folder.
+Portable Windows desktop wrapper for the [NextDNS](https://my.nextdns.io) dashboard.
+One small exe, no installer and no background service: it opens a local Home
+screen in a native window backed by the WebView2 runtime and launches the
+dashboard on demand. The browsing profile stays in the same folder.
 
 > [!NOTE]
 > This is an unofficial, community-made client. It is not affiliated with,
@@ -20,14 +20,75 @@ the same folder.
 
 ## Run
 
+1. Download `<version>_x64.zip` from the latest release.
+2. Unzip it anywhere and run `NextDNS-Dash.exe`.
+
+The app starts on Home: the NextDNS logo, **Open NextDNS Dashboard**, and
+**Settings**. The dashboard opens in the same window and signs in through the
+NextDNS site.
+
+The first launch creates `data\profile` beside the exe. The session lives there,
+so the whole folder can be copied to another machine and stay signed in.
+`config\app.ini` appears when you change a setting. To start over, use
+**Settings → Clear data**; the exe, `DLLs\`, `ui\` and `config\` are kept.
+
+### Portable layout
+
 ```
-bin\NextDNS-Dash.exe
+NextDNS-Dash.exe
+DLLs\
+  Microsoft.Web.WebView2.Core.dll
+  Microsoft.Web.WebView2.WinForms.dll
+  WebView2Loader.dll
+ui\
+  index.html
+  config.html
+  app.css
+  app.js
+  logo.svg
+  MonaSansVF.woff2
+  OFL-MonaSans.txt
+LICENSE
+NOTICE
+README.md
+data\        created on first run
+config\      created when a setting changes
 ```
 
-The first launch creates `data\profile` beside the exe, next to `DLLs\` and
-`config\`, and stores the session there, so the whole folder can be copied to
-another machine and stay logged in. Deleting `data` resets the app to a fresh
-login.
+## Settings
+
+- **Downloads** — allow or block downloads. On by default; allowed files save
+  to the user's Downloads folder. The preference lives in `config\app.ini` and
+  survives **Clear data**.
+- **Data** — shows the profile path, opens the folder, and clears the profile,
+  session and window state. Returns to Home with a fresh profile.
+- **About** — version and non-affiliation note.
+
+## Behaviour
+
+- Navigation stays on HTTPS `nextdns.io` and its subdomains, plus the local Home
+  and Settings pages. Other http(s) links open in the default browser; other
+  schemes are ignored.
+- Popups pointed at `nextdns.io` load in the same window; everything else goes
+  to the default browser.
+- Permission requests (camera, microphone, notifications, geolocation) are
+  denied.
+- One instance only; a second launch focuses the existing window.
+- Window size, position and maximized state are restored. The last dashboard
+  URL is used only for offline retry and browser-process restarts; every launch
+  starts on Home.
+- The embedded browser restarts if its process exits and reloads after a
+  renderer crash.
+- If the dashboard is unreachable, a short offline page offers **Back to home**
+  and retries automatically when the network returns.
+- Page right-click keeps the native Chromium menu. The title bar carries the
+  icon and window buttons only: icon or caption right-click, and `Alt+Space`,
+  do nothing.
+- DevTools, the status bar, password autosave and general autofill are off.
+  The window title is empty, so title-based password-manager auto-type has
+  nothing to match.
+- The wrapper makes no network connections of its own; all traffic comes from
+  the WebView2 runtime.
 
 ## Build
 
@@ -35,30 +96,36 @@ login.
 build.bat
 ```
 
-Compiles `src\*.cs` into `bin\NextDNS-Dash.exe`, embeds `assets\icon.ico`, and
-copies the WebView2 assemblies from `lib\` into `bin\DLLs\`. The app resolves
-both managed and native runtime files from that subfolder, so the release zip
-keeps the package root tidy. The `lib\` DLLs are the managed wrapper only
-(`Microsoft.Web.WebView2` 1.0.4314.35); the Chromium engine itself comes from the
-system-wide runtime.
+The script compiles `src\*.cs` into `bin\NextDNS-Dash.exe`, embeds
+`assets\icon.ico`, copies the vendored WebView2 SDK DLLs from `lib\` into
+`bin\DLLs\`, and assembles `bin\ui\` from `ui\` plus the Mona Sans font in
+`assets\MonaSans\`.
 
-## Behaviour
+The WebView2 SDK is pinned to 1.0.4314.35; the Chromium engine itself comes from
+the system-wide runtime. Vendored DLL hashes are in `lib\SHA256SUMS.txt`:
 
-- Navigation is limited to HTTPS on `nextdns.io` and its subdomains. Anything
-  else opens in your default browser.
-- Popups pointed at that domain load in the app; everything else goes to the
-  default browser.
-- All permission requests (camera, microphone, notifications, geolocation) are
-  denied.
-- A second launch focuses the existing window instead of starting another copy.
-- Rebuilds the embedded browser if its process exits, and reloads after a renderer crash.
-- Remembers its window position, size and the last dashboard page between launches.
-- When the dashboard is unreachable it shows a short offline page and retries
-  automatically once the network returns.
-- DevTools, the status bar, password autosave, and general autofill are off.
-- The title bar shows the app icon and window buttons only. Windows 11 colours
-  it exactly `#212529`; Windows 10 uses the same tint via the frame accent
-  policy, so the taskbar label is intentionally empty.
+```
+Get-ChildItem lib\*.dll | Get-FileHash -Algorithm SHA256
+```
 
-The window has no address bar, back button, or reload control; navigation is
-whatever the dashboard itself does.
+## Release
+
+`version` holds the version (for example `v1.1.0`). Pushing a change to that
+file runs the release workflow, builds the app, packages `<version>_x64.zip`
+and `<version>_x64.zip.sha256`, and creates a draft GitHub release. The zip
+contains the exe, `DLLs\`, `ui\`, `LICENSE`, `NOTICE` and this README.
+
+## Unsigned binary
+
+The exe is not code-signed, so Windows SmartScreen may show a warning on first
+run. Use **More info → Run anyway**, or verify the download against the
+published `.sha256` file:
+
+```
+Get-FileHash <version>_x64.zip -Algorithm SHA256
+```
+
+## License
+
+MIT; see `LICENSE`. Third-party notices, including the Microsoft Edge WebView2
+SDK (BSD-3-Clause) and Mona Sans (SIL OFL 1.1), are in `NOTICE`.

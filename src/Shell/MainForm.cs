@@ -1,5 +1,5 @@
 using System;
-using System.Drawing;
+using System.Diagnostics;
 using System.IO;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
@@ -11,21 +11,16 @@ class MainForm : Form
 {
     const string StartUrl = "https://my.nextdns.io";
 
-    const string OfflineHtml =
-        "<!doctype html><html><head><meta charset=\"utf-8\"><style>" +
-        "html,body{height:100%;margin:0}" +
-        "body{background:#212529;color:#e9ecef;font:15px/1.5 'Segoe UI',sans-serif;" +
-        "display:flex;align-items:center;justify-content:center}" +
-        ".box{text-align:center;max-width:420px;padding:24px}" +
-        "h1{font-size:18px;font-weight:600;margin:0 0 8px}" +
-        "p{margin:0 0 20px;color:#adb5bd}" +
-        "a{display:inline-block;padding:8px 18px;border-radius:4px;background:#2c3136;" +
-        "color:#e9ecef;text-decoration:none}a:hover{background:#3a4047}" +
-        "</style></head><body><div class=\"box\">" +
-        "<h1>Can't reach the dashboard</h1>" +
-        "<p>The app retries automatically when the connection comes back.</p>" +
-        "<a href=\"https://my.nextdns.io\">Try again</a>" +
-        "</div></body></html>";
+    const int WM_SYSCOMMAND = 0x0112;
+    const int WM_NCLBUTTONDOWN = 0x00A1;
+    const int WM_NCLBUTTONDBLCLK = 0x00A3;
+    const int WM_NCRBUTTONDOWN = 0x00A4;
+    const int WM_NCRBUTTONUP = 0x00A5;
+    const int WM_POPUPSYSTEMMENU = 0x0313;
+    const int HTCAPTION = 2;
+    const int HTSYSMENU = 3;
+    const int SC_KEYMENU = 0xF100;
+    const int SC_MOUSEMENU = 0xF090;
 
     WebView2 web;
     CoreWebView2 core;
@@ -34,15 +29,17 @@ class MainForm : Form
     bool cancelledNavigation;
     bool restarting;
     bool closing;
+    string lastNavigation;
     NetworkAvailabilityChangedEventHandler networkHandler;
 
     public MainForm()
     {
         Text = ""; // caption shows icon + buttons only
         Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-        BackColor = Color.FromArgb(0x21, 0x25, 0x29);
+        BackColor = Theme.Accent;
 
         State.Load();
+        Settings.Load();
         if (State.HasBounds)
         {
             StartPosition = FormStartPosition.Manual;
@@ -79,7 +76,7 @@ class MainForm : Form
     {
         web = new WebView2();
         web.Dock = DockStyle.Fill;
-        web.DefaultBackgroundColor = Color.FromArgb(0x21, 0x25, 0x29);
+        web.DefaultBackgroundColor = Theme.Accent;
         Controls.Add(web);
     }
 
@@ -89,11 +86,59 @@ class MainForm : Form
         Backdrop.Apply(Handle);
     }
 
+    protected override void WndProc(ref Message m)
+    {
+        // The window menu is disabled: the caption keeps only the minimize,
+        // maximize and close buttons. Every path that would open it is dropped.
+        if (m.Msg == WM_NCLBUTTONDOWN && (int)m.WParam == HTSYSMENU)
+        {
+            Activate();
+            m.Result = IntPtr.Zero;
+            return;
+        }
+
+        // Double-clicking the icon defaults to SC_CLOSE, which would quit the app.
+        if (m.Msg == WM_NCLBUTTONDBLCLK && (int)m.WParam == HTSYSMENU)
+        {
+            Activate();
+            m.Result = IntPtr.Zero;
+            return;
+        }
+
+        if ((m.Msg == WM_NCRBUTTONDOWN || m.Msg == WM_NCRBUTTONUP) &&
+            ((int)m.WParam == HTCAPTION || (int)m.WParam == HTSYSMENU))
+        {
+            Activate();
+            m.Result = IntPtr.Zero;
+            return;
+        }
+
+        // DefWindowProc answers a caption right-click with this message, which
+        // opens the system menu directly without going through WM_SYSCOMMAND.
+        if (m.Msg == WM_POPUPSYSTEMMENU)
+        {
+            m.Result = IntPtr.Zero;
+            return;
+        }
+
+        if (m.Msg == WM_SYSCOMMAND)
+        {
+            long command = m.WParam.ToInt64() & 0xFFF0;
+            if (command == SC_KEYMENU || command == SC_MOUSEMENU)
+            {
+                m.Result = IntPtr.Zero;
+                return;
+            }
+        }
+
+        base.WndProc(ref m);
+    }
+
     async void OnLoad(object sender, EventArgs e)
     {
         try
         {
-            await InitAsync();
+            await InitAsync(null);
         }
         catch (Exception ex)
         {
@@ -104,7 +149,7 @@ class MainForm : Form
         }
     }
 
-    async Task InitAsync()
+    async Task InitAsync(string startUrl)
     {
         try
         {
@@ -130,6 +175,7 @@ class MainForm : Form
 
         CoreWebView2 c = web.CoreWebView2;
         core = c;
+        WebUi.Map(c);
 
         CoreWebView2Settings st = c.Settings;
         st.AreDevToolsEnabled = false;
@@ -159,9 +205,26 @@ class MainForm : Form
                 Policy.OpenExternal(args.Uri);
         };
 
+        c.WebMessageReceived += delegate(object s, CoreWebView2WebMessageReceivedEventArgs args)
+        {
+            if (!WebUi.IsLocalSource(args.Source)) return;
+
+            string message;
+            try { message = args.TryGetWebMessageAsString(); }
+            catch (Exception) { return; }
+
+            HandleMessage(c, message);
+        };
+
         c.PermissionRequested += delegate(object s, CoreWebView2PermissionRequestedEventArgs args)
         {
             args.State = CoreWebView2PermissionState.Deny;
+        };
+
+        // Downloads are refused unless the Settings toggle allows them.
+        c.DownloadStarting += delegate(object s, CoreWebView2DownloadStartingEventArgs args)
+        {
+            if (!Settings.DownloadsEnabled) args.Cancel = true;
         };
 
         c.ProcessFailed += delegate(object s, CoreWebView2ProcessFailedEventArgs args)
@@ -184,6 +247,7 @@ class MainForm : Form
             {
                 if (showingOffline && c.Source == "about:blank") return;
                 showingOffline = false;
+                lastNavigation = c.Source;
                 State.SaveUrl(c.Source);
                 State.Save(this);
                 return;
@@ -192,7 +256,131 @@ class MainForm : Form
             if (IsOfflineStatus(args.WebErrorStatus)) ShowOffline(c);
         };
 
-        c.Navigate(State.LastUrl ?? StartUrl);
+        c.Navigate(startUrl ?? LaunchUrl());
+    }
+
+    static string LaunchUrl()
+    {
+        return WebUi.IsAvailable ? WebUi.HomeUrl : StartUrl;
+    }
+
+    void HandleMessage(CoreWebView2 c, string message)
+    {
+        if (message == "init")
+        {
+            SendState(c);
+            return;
+        }
+
+        if (message == "open-data-folder")
+        {
+            OpenDataFolder();
+            return;
+        }
+
+        if (message == "clear-data")
+        {
+            ClearData();
+            return;
+        }
+
+        if (message != null && message.StartsWith("downloads:", StringComparison.Ordinal))
+        {
+            Settings.SetDownloads(message.Substring("downloads:".Length) == "on");
+            SendState(c);
+        }
+    }
+
+    static void SendState(CoreWebView2 c)
+    {
+        try { c.PostWebMessageAsJson(WebUi.StateJson()); }
+        catch (Exception) { }
+    }
+
+    static void OpenDataFolder()
+    {
+        try
+        {
+            Directory.CreateDirectory(Program.DataDirectory);
+            Process.Start(new ProcessStartInfo(Program.DataDirectory) { UseShellExecute = true });
+        }
+        catch (Exception) { }
+    }
+
+    async void ClearData()
+    {
+        if (restarting || closing) return;
+        restarting = true;
+
+        bool removed = false;
+        Exception failure = null;
+
+        try
+        {
+            core = null;
+            showingOffline = false;
+            cancelledNavigation = false;
+            lastNavigation = null;
+
+            try { web.Dispose(); }
+            catch (Exception) { }
+            web = null;
+
+            for (int attempt = 0; attempt < 10 && !closing; attempt++)
+            {
+                try
+                {
+                    if (Directory.Exists(Program.DataDirectory))
+                        Directory.Delete(Program.DataDirectory, true);
+                    removed = true;
+                    break;
+                }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
+                await Task.Delay(400);
+            }
+        }
+        catch (Exception ex)
+        {
+            failure = ex;
+        }
+        finally
+        {
+            restarting = false;
+        }
+
+        if (closing) return;
+
+        if (failure != null)
+        {
+            MessageBox.Show(this,
+                "NextDNS-Dash could not clear its data.\r\n\r\n" + failure.Message,
+                "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+
+        State.Load();
+
+        try
+        {
+            CreateWebView();
+            await InitAsync(failure == null && WebUi.IsAvailable
+                ? WebUi.HomeUrl
+                : null);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this,
+                "NextDNS-Dash could not reopen its browser.\r\n\r\n" + ex.Message,
+                "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        if (!removed && failure == null)
+        {
+            MessageBox.Show(this,
+                "Some app data could not be removed. Close NextDNS-Dash and delete the data folder.",
+                "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
     }
 
     void RestartBrowserSoon()
@@ -230,7 +418,7 @@ class MainForm : Form
                 try
                 {
                     CreateWebView();
-                    await InitAsync();
+                    await InitAsync(lastNavigation ?? LaunchUrl());
                     return;
                 }
                 catch (Exception ex)
@@ -262,7 +450,32 @@ class MainForm : Form
     {
         if (showingOffline && c.Source == "about:blank") return;
         showingOffline = true;
-        c.NavigateToString(OfflineHtml);
+        c.NavigateToString(BuildOfflineHtml());
+    }
+
+    static string BuildOfflineHtml()
+    {
+        string back = WebUi.IsAvailable
+            ? "<a class=\"secondary\" href=\"" + WebUi.HomeUrl + "\">Back to home</a>"
+            : "";
+
+        return "<!doctype html><html><head><meta charset=\"utf-8\"><style>" +
+            "html,body{height:100%;margin:0}" +
+            "body{background:#212529;color:#e9ecef;font:15px/1.5 'Segoe UI',sans-serif;" +
+            "display:flex;align-items:center;justify-content:center}" +
+            ".box{text-align:center;max-width:420px;padding:24px}" +
+            "h1{font-size:18px;font-weight:600;margin:0 0 8px}" +
+            "p{margin:0 0 20px;color:#adb5bd}" +
+            "a{display:inline-block;margin:0 4px;padding:8px 18px;border-radius:6px;" +
+            "text-decoration:none}" +
+            "a.primary{background:#00a6ff;color:#07131c}a.primary:hover{background:#33b8ff}" +
+            "a.secondary{background:#2c3136;color:#e9ecef}a.secondary:hover{background:#3a4047}" +
+            "</style></head><body><div class=\"box\">" +
+            "<h1>Can't reach the dashboard</h1>" +
+            "<p>The app retries automatically when the connection comes back.</p>" +
+            "<a class=\"primary\" href=\"https://my.nextdns.io\">Try again</a>" +
+            back +
+            "</div></body></html>";
     }
 
     static bool IsOfflineStatus(CoreWebView2WebErrorStatus status)

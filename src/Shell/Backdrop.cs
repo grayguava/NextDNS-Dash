@@ -12,7 +12,7 @@ static class Backdrop
     [StructLayout(LayoutKind.Sequential)]
     struct CompositionData { public int Attribute; public IntPtr Data; public int Size; }
 
-    const int RGB = 0x212529;
+    static readonly int RGB = (Theme.Accent.R << 16) | (Theme.Accent.G << 8) | Theme.Accent.B;
     const int WCA_ACCENT_POLICY = 19;
     // The tint is opaque, so the gradient state paints the same colour as acrylic
     // without the per-frame blur cost that makes dragging and resizing lag on Win10.

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>NextDNS-Dash &mdash; Settings</title>
+<link rel="stylesheet" href="app.css">
+<script src="app.js" defer></script>
+</head>
+<body class="config-body" data-page="config">
+<main class="config">
+    <section class="panel">
+        <div class="panel-head">
+            <h1 class="panel-title page-title">Settings</h1>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <h2 class="panel-title">Downloads</h2>
+        </div>
+        <label class="setting">
+            <span class="setting-text">
+                <strong>Allow downloads</strong>
+                <small>Files save to your Downloads folder. When off, downloads are blocked.</small>
+            </span>
+            <input type="checkbox" id="downloads">
+            <span class="switch" aria-hidden="true"></span>
+        </label>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <h2 class="panel-title">Data</h2>
+            <p class="muted">The browser profile, sign-in session and window state live in:</p>
+        </div>
+        <div class="data-row">
+            <code class="path" id="data-dir"></code>
+            <button class="textbtn" id="open-data" type="button">Open folder</button>
+            <button class="textbtn textbtn-danger" id="clear-data" type="button">Clear data</button>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <h2 class="panel-title">About</h2>
+            <p class="muted"><strong>NextDNS-Dash</strong> <span id="version"></span></p>
+        </div>
+        <p class="muted">Unofficial client. Not affiliated with, endorsed, or supported by <a href="https://nextdns.io">NextDNS</a>. View code on <a href="https://github.com/grayguava/NextDNS-Dash">GitHub</a>.</p>
+    </section>
+
+</main>
+
+<dialog id="clear-dialog" aria-labelledby="clear-title">
+    <h2 id="clear-title">Clear app data?</h2>
+    <p>This signs you out and deletes the saved browser profile and window state. Settings are kept. This cannot be undone.</p>
+    <div class="dialog-actions">
+        <button class="btn btn-secondary" id="cancel-clear" type="button">Cancel</button>
+        <button class="btn btn-danger-solid" id="confirm-clear" type="button">Clear data</button>
+    </div>
+</dialog>
+</body>
+</html>

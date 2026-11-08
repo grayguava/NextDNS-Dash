@@ -11,6 +11,9 @@ static class Program
     internal static readonly string DataDirectory =
         Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data");
 
+    internal static readonly string ConfigDirectory =
+        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config");
+
     [DllImport("user32.dll")]
     static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 

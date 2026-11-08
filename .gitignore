@@ -1,4 +1,5 @@
 bin/
 data/
 release/
+obj/
 checklist.md

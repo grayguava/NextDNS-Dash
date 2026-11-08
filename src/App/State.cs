@@ -113,7 +113,7 @@ static class State
     {
         Uri uri;
         if (!Uri.TryCreate(url, UriKind.Absolute, out uri)) return null;
-        if (!Policy.IsAllowed(uri.AbsoluteUri)) return null;
+        if (!Policy.IsDashboard(uri.AbsoluteUri)) return null;
         return uri.GetLeftPart(UriPartial.Path);
     }
 

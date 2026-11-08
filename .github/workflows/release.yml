@@ -65,7 +65,8 @@ jobs:
           $ErrorActionPreference = "Stop"
           $root = "release/nextdns-dash"
           $dll = "$root/DLLs"
-          New-Item -ItemType Directory -Force -Path $dll, "$root/config" | Out-Null
+          $ui = "$root/ui"
+          New-Item -ItemType Directory -Force -Path $dll, $ui | Out-Null
 
           if (-not (Test-Path -LiteralPath "bin/NextDNS-Dash.exe")) {
             throw "Missing bin/NextDNS-Dash.exe"
@@ -82,8 +83,24 @@ jobs:
             Copy-Item -LiteralPath $file -Destination $dll
           }
 
-          if (Test-Path -LiteralPath "LICENSE") {
-            Copy-Item -LiteralPath "LICENSE" -Destination $root
+          $uiFiles = @(
+            "index.html",
+            "config.html",
+            "app.css",
+            "app.js",
+            "logo.svg",
+            "MonaSansVF.woff2",
+            "OFL-MonaSans.txt"
+          )
+          foreach ($file in $uiFiles) {
+            $source = "bin/ui/$file"
+            if (-not (Test-Path -LiteralPath $source)) { throw "Missing $source" }
+            Copy-Item -LiteralPath $source -Destination $ui
+          }
+
+          foreach ($doc in @("LICENSE", "NOTICE", "README.md")) {
+            if (-not (Test-Path -LiteralPath $doc)) { throw "Missing $doc" }
+            Copy-Item -LiteralPath $doc -Destination $root
           }
 
           $zip = "release/$($env:TAG)_x64.zip"
@@ -91,6 +108,29 @@ jobs:
 
           $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $($env:TAG)_x64.zip" | Set-Content -LiteralPath "$zip.sha256" -Encoding ascii
+
+          $check = Join-Path $env:RUNNER_TEMP "package-check"
+          if (Test-Path -LiteralPath $check) { Remove-Item $check -Recurse -Force }
+          Expand-Archive -LiteralPath $zip -DestinationPath $check
+          $required = @(
+            "NextDNS-Dash.exe",
+            "DLLs/WebView2Loader.dll",
+            "ui/index.html",
+            "ui/config.html",
+            "ui/app.css",
+            "ui/app.js",
+            "ui/logo.svg",
+            "ui/MonaSansVF.woff2",
+            "ui/OFL-MonaSans.txt",
+            "LICENSE",
+            "NOTICE",
+            "README.md"
+          )
+          foreach ($file in $required) {
+            if (-not (Test-Path -LiteralPath (Join-Path "$check/nextdns-dash" $file))) {
+              throw "Package missing $file"
+            }
+          }
 
       - uses: actions/upload-artifact@v4
         with:

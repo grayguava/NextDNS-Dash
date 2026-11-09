@@ -90,6 +90,28 @@ body.lock-body {
     line-height: 1.5;
 }
 
+.lock-link {
+    align-self: center;
+    padding: 4px 2px;
+    border: 0;
+    background: none;
+    color: #91989f;
+    font: inherit;
+    font-size: 12.5px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+.lock-link:hover {
+    color: var(--muted);
+}
+
+.lock-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
 .lock-confirm {
     display: flex;
     flex-direction: column;

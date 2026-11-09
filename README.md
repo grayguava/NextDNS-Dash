@@ -39,5 +39,5 @@ data**; the exe, `DLLs\`, `ui\` and `config\` are kept.
 
 ## License
 
-MIT; see `LICENSE`. Third-party notices, including the Microsoft Edge WebView2
-SDK (BSD-3-Clause) and Mona Sans (SIL OFL 1.1), are in `NOTICE`.
+MIT; see [LICENSE](LICENSE). Third-party notices, including the Microsoft Edge WebView2
+SDK (BSD-3-Clause) and Mona Sans (SIL OFL 1.1), are in [NOTICE](NOTICE).

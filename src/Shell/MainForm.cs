@@ -11,6 +11,18 @@ class MainForm : Form
 {
     const string StartUrl = "https://my.nextdns.io";
 
+    // Keep Chromium's own traffic out of a privacy tool: Edge config, SmartScreen
+    // reputation, component updates, crash upload and sync have no part in
+    // showing the dashboard.
+    const string BrowserFlags =
+        "--disable-background-networking " +
+        "--disable-component-update " +
+        "--disable-domain-reliability " +
+        "--disable-sync " +
+        "--disable-breakpad " +
+        "--disable-client-side-phishing-detection " +
+        "--no-pings";
+
     const int WM_SYSCOMMAND = 0x0112;
     const int WM_NCLBUTTONDOWN = 0x00A1;
     const int WM_NCLBUTTONDBLCLK = 0x00A3;
@@ -323,8 +335,11 @@ class MainForm : Form
 
         string profileDir = Path.Combine(Program.DataDirectory, "profile");
 
+        var options = new CoreWebView2EnvironmentOptions();
+        options.AdditionalBrowserArguments = BrowserFlags;
+
         CoreWebView2Environment env =
-            await CoreWebView2Environment.CreateAsync(null, profileDir);
+            await CoreWebView2Environment.CreateAsync(null, profileDir, options);
         if (closing) return;
         await web.EnsureCoreWebView2Async(env);
         if (closing) return;
@@ -339,6 +354,7 @@ class MainForm : Form
         st.AreDefaultContextMenusEnabled = false;
         st.IsPasswordAutosaveEnabled = false;
         st.IsGeneralAutofillEnabled = false;
+        st.IsReputationCheckingRequired = false;
         // Otherwise Chromium paints its own error page until NavigationCompleted
         // fires and we can swap in ours.
         st.IsBuiltInErrorPageEnabled = false;

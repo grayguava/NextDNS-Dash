@@ -98,6 +98,9 @@ config\      created when a setting changes
 - DevTools, the status bar, password autosave and general autofill are off.
   The window title is empty, so title-based password-manager auto-type has
   nothing to match.
+- SmartScreen reputation checks are off, and Chromium's own background traffic
+  (Edge config, component updates, domain reliability, sync, crash upload,
+  pings) is disabled. Idle measurement went from five external hosts to none.
 - The wrapper makes no network connections of its own; all traffic comes from
   the WebView2 runtime.
 

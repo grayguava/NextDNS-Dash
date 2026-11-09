@@ -369,6 +369,17 @@ a {
     outline-offset: 2px;
 }
 
+.setting input:disabled + .switch {
+    opacity: 0.45;
+}
+
+.setting-note {
+    margin: 10px 0 0;
+    color: #91989f;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .switch,
     .switch::after {

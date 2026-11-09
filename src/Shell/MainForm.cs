@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
@@ -25,10 +26,19 @@ class MainForm : Form
     WebView2 web;
     CoreWebView2 core;
 
+    Panel lockPanel;
+    Label lockStatus;
+    Button unlockButton;
+    Button setupButton;
+    Button bypassButton;
+
     bool showingOffline;
     bool cancelledNavigation;
     bool restarting;
     bool closing;
+    bool locked;
+    bool unlockBusy;
+    string pendingUrl;
     string lastNavigation;
     NetworkAvailabilityChangedEventHandler networkHandler;
 
@@ -54,7 +64,16 @@ class MainForm : Form
         }
 
         CreateWebView();
+        CreateLockPanel();
         Load += OnLoad;
+        Shown += delegate { if (locked) BeginUnlock(); };
+
+        if (Settings.LockOnLaunch)
+        {
+            locked = true;
+            web.Visible = false;
+            lockPanel.Visible = true;
+        }
 
         networkHandler = delegate(object s, NetworkAvailabilityEventArgs e)
         {
@@ -77,7 +96,185 @@ class MainForm : Form
         web = new WebView2();
         web.Dock = DockStyle.Fill;
         web.DefaultBackgroundColor = Theme.Accent;
+        web.Visible = !locked;
         Controls.Add(web);
+    }
+
+    void CreateLockPanel()
+    {
+        lockPanel = new Panel();
+        lockPanel.Dock = DockStyle.Fill;
+        lockPanel.BackColor = Theme.Accent;
+        lockPanel.Visible = false;
+
+        var title = new Label();
+        title.Text = "NextDNS-Dash is locked";
+        title.ForeColor = Theme.Text;
+        title.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+        title.AutoSize = true;
+        title.Margin = new Padding(0, 0, 0, 6);
+
+        lockStatus = new Label();
+        lockStatus.Text = "Unlock with Windows Hello to continue.";
+        lockStatus.ForeColor = Color.FromArgb(0xAD, 0xB5, 0xBD);
+        lockStatus.Font = new Font("Segoe UI", 9F);
+        lockStatus.AutoSize = true;
+        lockStatus.MaximumSize = new Size(440, 0);
+        lockStatus.TextAlign = ContentAlignment.MiddleCenter;
+        lockStatus.Margin = new Padding(0, 0, 0, 12);
+
+        unlockButton = MakeButton("Unlock");
+        unlockButton.Click += delegate { BeginUnlock(); };
+
+        setupButton = MakeButton("Open sign-in settings");
+        setupButton.Visible = false;
+        setupButton.Click += delegate { OpenSignInSettings(); };
+
+        bypassButton = MakeButton("Open without lock");
+        bypassButton.Visible = false;
+        bypassButton.Click += delegate
+        {
+            Settings.SetLock(false);
+            Unlock();
+        };
+
+        var buttons = new FlowLayoutPanel();
+        buttons.AutoSize = true;
+        buttons.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        buttons.FlowDirection = FlowDirection.LeftToRight;
+        buttons.WrapContents = false;
+        buttons.Anchor = AnchorStyles.None;
+        buttons.BackColor = Theme.Accent;
+        buttons.Controls.Add(unlockButton);
+        buttons.Controls.Add(setupButton);
+        buttons.Controls.Add(bypassButton);
+
+        var inner = new FlowLayoutPanel();
+        inner.AutoSize = true;
+        inner.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        inner.FlowDirection = FlowDirection.TopDown;
+        inner.WrapContents = false;
+        inner.Anchor = AnchorStyles.None;
+        inner.BackColor = Theme.Accent;
+        inner.Controls.Add(title);
+        inner.Controls.Add(lockStatus);
+        inner.Controls.Add(buttons);
+
+        var host = new TableLayoutPanel();
+        host.Dock = DockStyle.Fill;
+        host.BackColor = Theme.Accent;
+        host.ColumnCount = 1;
+        host.RowCount = 1;
+        host.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        host.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        host.Controls.Add(inner, 0, 0);
+
+        lockPanel.Controls.Add(host);
+        Controls.Add(lockPanel);
+        lockPanel.BringToFront();
+    }
+
+    static Button MakeButton(string text)
+    {
+        var button = new Button();
+        button.Text = text;
+        button.AutoSize = true;
+        button.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        button.Padding = new Padding(14, 5, 14, 5);
+        button.Margin = new Padding(0, 0, 8, 0);
+        button.FlatStyle = FlatStyle.Flat;
+        button.FlatAppearance.BorderSize = 0;
+        button.FlatAppearance.MouseOverBackColor = Color.FromArgb(0x3A, 0x40, 0x47);
+        button.BackColor = Theme.Hover;
+        button.ForeColor = Theme.Text;
+        button.Font = new Font("Segoe UI", 9F);
+        button.Cursor = Cursors.Hand;
+        return button;
+    }
+
+    async void BeginUnlock()
+    {
+        if (unlockBusy || !locked) return;
+
+        unlockBusy = true;
+        unlockButton.Enabled = false;
+        setupButton.Visible = false;
+        bypassButton.Visible = false;
+        lockStatus.Text = "Waiting for Windows Hello...";
+        WindowsHello.Recheck();
+
+        bool verified = await Task.Factory.StartNew<bool>(delegate
+        {
+            if (!WindowsHello.IsAvailable) return false;
+            return WindowsHello.Verify("Unlock NextDNS-Dash");
+        });
+
+        unlockBusy = false;
+        unlockButton.Enabled = true;
+
+        if (closing) return;
+
+        if (verified)
+        {
+            Unlock();
+            return;
+        }
+
+        if (!WindowsHello.IsAvailable)
+        {
+            lockStatus.Text = HelloReason(WindowsHello.Availability) +
+                " Set it up in Windows Settings, or open without the lock.";
+            unlockButton.Text = "Try again";
+            unlockButton.Visible = true;
+            unlockButton.Enabled = true;
+            setupButton.Visible = true;
+            bypassButton.Visible = true;
+            setupButton.Focus();
+            return;
+        }
+
+        lockStatus.Text = "Windows Hello did not verify. Try again.";
+        unlockButton.Focus();
+    }
+
+    void Unlock()
+    {
+        if (closing) return;
+
+        locked = false;
+        lockPanel.Visible = false;
+        web.Visible = true;
+
+        if (core != null)
+        {
+            string url = pendingUrl ?? LaunchUrl();
+            pendingUrl = null;
+            try { core.Navigate(url); }
+            catch (Exception) { }
+        }
+
+        web.Focus();
+    }
+
+    static string HelloReason(string status)
+    {
+        switch (status)
+        {
+            case "NotConfiguredForUser": return "Windows Hello is not set up for this account.";
+            case "DeviceNotPresent": return "No Windows Hello device is available.";
+            case "DisabledByPolicy": return "Windows Hello is disabled by policy.";
+            case "DeviceBusy": return "Windows Hello is busy. Try again.";
+            default: return "Windows Hello is not available.";
+        }
+    }
+
+    static void OpenSignInSettings()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo("ms-settings:signinoptions") { UseShellExecute = true });
+        }
+        catch (Exception) { }
     }
 
     protected override void OnHandleCreated(EventArgs e)
@@ -146,7 +343,7 @@ class MainForm : Form
 
     void GoHome()
     {
-        if (core == null || closing) return;
+        if (locked || core == null || closing) return;
         try { core.Navigate(WebUi.IsAvailable ? WebUi.HomeUrl : StartUrl); }
         catch (Exception) { }
     }
@@ -274,7 +471,10 @@ class MainForm : Form
             if (IsOfflineStatus(args.WebErrorStatus)) ShowOffline(c);
         };
 
-        c.Navigate(startUrl ?? LaunchUrl());
+        if (locked)
+            pendingUrl = startUrl ?? LaunchUrl();
+        else
+            c.Navigate(startUrl ?? LaunchUrl());
     }
 
     static string LaunchUrl()
@@ -302,6 +502,19 @@ class MainForm : Form
             return;
         }
 
+        if (message != null && message.StartsWith("lock:", StringComparison.Ordinal))
+        {
+            bool enabled = message.Substring("lock:".Length) == "on";
+            if (enabled && !WindowsHello.IsAvailable)
+            {
+                SendState(c, "Windows Hello is not set up on this PC.");
+                return;
+            }
+            Settings.SetLock(enabled);
+            SendState(c);
+            return;
+        }
+
         if (message != null && message.StartsWith("downloads:", StringComparison.Ordinal))
         {
             Settings.SetDownloads(message.Substring("downloads:".Length) == "on");
@@ -311,7 +524,12 @@ class MainForm : Form
 
     static void SendState(CoreWebView2 c)
     {
-        try { c.PostWebMessageAsJson(WebUi.StateJson()); }
+        SendState(c, null);
+    }
+
+    static void SendState(CoreWebView2 c, string lockError)
+    {
+        try { c.PostWebMessageAsJson(WebUi.StateJson(lockError)); }
         catch (Exception) { }
     }
 

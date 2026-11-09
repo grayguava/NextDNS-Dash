@@ -34,11 +34,14 @@ static class WebUi
             string.Equals(u.Host, LocalHost, StringComparison.OrdinalIgnoreCase);
     }
 
-    public static string StateJson()
+    public static string StateJson(string lockError)
     {
         return "{\"type\":\"state\"" +
             ",\"version\":" + Quote(BuildInfo.Version) +
             ",\"downloads\":" + (Settings.DownloadsEnabled ? "true" : "false") +
+            ",\"lock\":" + (Settings.LockOnLaunch ? "true" : "false") +
+            ",\"lockAvailable\":" + (WindowsHello.IsAvailable ? "true" : "false") +
+            (lockError == null ? "" : ",\"lockError\":" + Quote(lockError)) +
             ",\"dataDir\":" + Quote(Program.DataDirectory) +
             "}";
     }

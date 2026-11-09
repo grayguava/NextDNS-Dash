@@ -33,6 +33,21 @@
 
     <section class="panel">
         <div class="panel-head">
+            <h2 class="panel-title">Security</h2>
+        </div>
+        <label class="setting">
+            <span class="setting-text">
+                <strong>Require Windows sign-in on launch</strong>
+                <small>Unlock with Windows Hello, PIN, or your account password before the app opens.</small>
+            </span>
+            <input type="checkbox" id="lock">
+            <span class="switch" aria-hidden="true"></span>
+        </label>
+        <p class="setting-note" id="lock-note" hidden></p>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
             <h2 class="panel-title">Data</h2>
             <p class="muted">The browser profile, sign-in session and window state live in:</p>
         </div>

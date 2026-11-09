@@ -5,10 +5,12 @@ using System.Text;
 static class Settings
 {
     public static bool DownloadsEnabled { get; private set; }
+    public static bool LockOnLaunch { get; private set; }
 
     static Settings()
     {
         DownloadsEnabled = true;
+        LockOnLaunch = true;
     }
 
     static string FilePath
@@ -19,6 +21,7 @@ static class Settings
     public static void Load()
     {
         DownloadsEnabled = true;
+        LockOnLaunch = true;
 
         try
         {
@@ -37,6 +40,8 @@ static class Settings
 
                 if (key == "downloads")
                     DownloadsEnabled = value != "off" && value != "0" && value != "false";
+                if (key == "lock")
+                    LockOnLaunch = value != "off" && value != "0" && value != "false";
             }
         }
         catch (IOException) { }
@@ -52,11 +57,21 @@ static class Settings
         return true;
     }
 
+    public static bool SetLock(bool enabled)
+    {
+        if (enabled == LockOnLaunch) return false;
+
+        LockOnLaunch = enabled;
+        Save();
+        return true;
+    }
+
     static void Save()
     {
         var text = new StringBuilder();
         text.AppendLine("# NextDNS-Dash settings");
         text.AppendLine("downloads=" + (DownloadsEnabled ? "on" : "off"));
+        text.AppendLine("lock=" + (LockOnLaunch ? "on" : "off"));
 
         try
         {

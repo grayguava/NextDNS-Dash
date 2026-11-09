@@ -20,6 +20,24 @@
 
         var downloads = document.getElementById("downloads");
         if (downloads) downloads.checked = state.downloads === true;
+
+        var lock = document.getElementById("lock");
+        if (lock) {
+            lock.checked = state.lock === true;
+            lock.disabled = state.lockAvailable === false;
+        }
+
+        var lockNote = document.getElementById("lock-note");
+        if (lockNote) {
+            var note = "";
+            if (state.lockAvailable === false) {
+                note = "Windows Hello is not set up on this PC. Set it up in Windows Settings to use the lock.";
+            } else if (state.lockError) {
+                note = state.lockError;
+            }
+            lockNote.textContent = note;
+            lockNote.hidden = note === "";
+        }
     }
 
     if (api) {
@@ -32,6 +50,13 @@
     if (downloads) {
         downloads.addEventListener("change", function () {
             post("downloads:" + (this.checked ? "on" : "off"));
+        });
+    }
+
+    var lock = document.getElementById("lock");
+    if (lock) {
+        lock.addEventListener("change", function () {
+            post("lock:" + (this.checked ? "on" : "off"));
         });
     }
 

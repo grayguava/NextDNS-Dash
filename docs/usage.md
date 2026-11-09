@@ -2,34 +2,36 @@
 
 ## Home
 
-Without the launch lock, the app opens Home: the NextDNS logo, **Open NextDNS
-Dashboard**, and **Settings**. With the lock on, Home appears after you unlock.
-The dashboard opens in the same window and signs in through the NextDNS site.
+The app opens Home: the NextDNS logo, **Open NextDNS Dashboard**, and
+**Settings**. The dashboard opens in the same window and signs in through the
+NextDNS site.
 
-The first launch creates `data\profile` beside the exe. The session lives there,
-so the whole folder can be copied to another machine and stay signed in.
+Private mode is the default, so the session is not saved and you sign in again
+after each restart. Turn on **Save my session** in Settings to keep the session.
+While InPrivate is active, a small eye-off badge stays in the bottom-left corner
+of every page, including the dashboard.
 
 ## Settings
 
 ### Downloads
 
 Allow or block downloads. On by default; allowed files save to the user's
-Downloads folder. The preference lives in `config\app.ini` and survives
+Downloads folder. The preference lives in `data\appConfig.ini` and survives
 **Clear data**.
 
-### Security
+### Session
 
-**Require Windows sign-in on launch** asks for Windows Hello, PIN, or your
-account password before the app opens. Off by default; turn it on in Settings.
+**Save my session** is off by default. When it is off, the app runs in private
+mode: cookies, cache, history and the session are not saved, and closing the app
+signs you out.
 
-When enabled, the dashboard stays hidden behind the lock screen at
-`ui\lock.html` until verification succeeds. If verification fails or Windows
-Hello is not available, the only ways out are **Try again** and the **Unable to
-sign in? Reset the app** link. Reset deletes the profile, session and window
-state and turns the lock off, so nothing sensitive is left behind. A failed
-delete keeps the app locked.
+When it is on, the profile in `data\profile` persists and the dashboard stays
+signed in. That profile is ordinary files readable by anything running as your
+Windows user.
 
-The preference lives in `config\app.ini` and survives **Clear data**.
+Turning **Save my session** off asks for confirmation, then deletes the saved
+profile and signs you out. The preference lives in `data\appConfig.ini` and survives
+**Clear data**.
 
 ### Data
 
@@ -48,13 +50,11 @@ DLLs\
   Microsoft.Web.WebView2.Core.dll
   Microsoft.Web.WebView2.WinForms.dll
   WebView2Loader.dll
-ui\
+UI\
   index.html
   config.html
-  lock.html
   app.css
   app.js
-  lock.js
   logo.svg
   MonaSansVF.woff2
   OFL-MonaSans.txt
@@ -62,16 +62,16 @@ LICENSE
 NOTICE
 README.md
 docs\
-data\        created on first run
-config\      created when a setting changes
+data\        created on first run (appConfig.ini, state.ini, profile\)
 ```
 
 ## Window and input
 
 - One instance only; a second launch focuses the existing window.
 - Window size, position and maximized state are restored. The last dashboard
-  URL is used only for offline retry and browser-process restarts; every launch
-  opens Home, after the lock screen when the lock is on.
+  URL is kept in memory for offline retry and browser-process restarts; in
+  private mode it is not written to disk. Every launch opens Home. Private mode
+  signs you out; **Save my session** keeps you signed in.
 - Right-click is disabled throughout the app. Clicking the title bar icon, left
   or right, returns to Home; caption right-click and `Alt+Space` do nothing.
   Keyboard shortcuts still work.

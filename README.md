@@ -3,7 +3,8 @@
 Portable Windows desktop wrapper for the [NextDNS](https://my.nextdns.io)
 dashboard. One small exe, no installer and no background service: it opens a
 local Home screen in a native window backed by the WebView2 runtime and
-launches the dashboard on demand. The browsing profile stays in the same folder.
+launches the dashboard on demand. The browsing profile stays in the same folder
+when you choose to save your session; private mode is the default.
 
 > [!NOTE]
 > This is an unofficial, community-made client. It is not affiliated with,
@@ -24,16 +25,17 @@ launches the dashboard on demand. The browsing profile stays in the same folder.
 1. Download `<version>_x64.zip` from the latest release.
 2. Unzip it anywhere and run `NextDNS-Dash.exe`.
 
-The first launch creates `data\profile` beside the exe. `config\app.ini`
-appears when you change a setting. To start over, use **Settings → Clear
-data**; the exe, `DLLs\`, `ui\` and `config\` are kept.
+The first launch creates `data\profile` beside the exe. In private mode the
+session is cleared when you close the app; turn on **Save my session** to keep
+it. `data\appConfig.ini` appears when you change a setting. To start over, use
+**Settings → Clear data**; the exe, `DLLs\`, `UI\` and your settings are kept.
 
 ## Docs
 
-- [Usage](docs/usage.md): Home, dashboard, settings, lock screen, data and the
+- [Usage](docs/usage.md): Home, dashboard, settings, private mode, data and the
   portable layout.
-- [Security and privacy](docs/security.md): what the lock protects, the network
-  policy, and the Chromium traffic that is switched off.
+- [Security and privacy](docs/security.md): private mode, the network policy,
+  and the Chromium traffic that is switched off.
 - [Build and release](docs/build.md): `build.bat`, source layout, editing the
   UI, releases and the unsigned-binary note.
 

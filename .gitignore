@@ -3,3 +3,5 @@ data/
 release/
 obj/
 checklist.md
+build/cache/
+anti-slop/

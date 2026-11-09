@@ -22,6 +22,10 @@
     box-sizing: border-box;
 }
 
+[hidden] {
+    display: none !important;
+}
+
 html {
     background: var(--bg);
     height: 100%;
@@ -46,6 +50,59 @@ body.home-body {
 
 body.config-body {
     padding: 36px 10% 48px;
+}
+
+body.lock-body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+}
+
+.lock {
+    width: 100%;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    text-align: center;
+}
+
+.lock-logo {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 4px;
+    object-fit: contain;
+}
+
+.lock-title {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 600;
+}
+
+.lock-text {
+    margin: 0 0 6px;
+    color: var(--muted);
+    font-size: 13.5px;
+    line-height: 1.5;
+}
+
+.lock-confirm {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    text-align: left;
+}
+
+.lock-confirm .lock-text {
+    margin: 0;
 }
 
 a {

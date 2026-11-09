@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
@@ -26,12 +25,6 @@ class MainForm : Form
     WebView2 web;
     CoreWebView2 core;
 
-    Panel lockPanel;
-    Label lockStatus;
-    Button unlockButton;
-    Button setupButton;
-    Button bypassButton;
-
     bool showingOffline;
     bool cancelledNavigation;
     bool restarting;
@@ -40,6 +33,8 @@ class MainForm : Form
     bool unlockBusy;
     string pendingUrl;
     string lastNavigation;
+    string lockState = "ready";
+    string lockMessage;
     NetworkAvailabilityChangedEventHandler networkHandler;
 
     public MainForm()
@@ -64,16 +59,11 @@ class MainForm : Form
         }
 
         CreateWebView();
-        CreateLockPanel();
         Load += OnLoad;
         Shown += delegate { if (locked) BeginUnlock(); };
 
         if (Settings.LockOnLaunch)
-        {
             locked = true;
-            web.Visible = false;
-            lockPanel.Visible = true;
-        }
 
         networkHandler = delegate(object s, NetworkAvailabilityEventArgs e)
         {
@@ -96,100 +86,7 @@ class MainForm : Form
         web = new WebView2();
         web.Dock = DockStyle.Fill;
         web.DefaultBackgroundColor = Theme.Accent;
-        web.Visible = !locked;
         Controls.Add(web);
-    }
-
-    void CreateLockPanel()
-    {
-        lockPanel = new Panel();
-        lockPanel.Dock = DockStyle.Fill;
-        lockPanel.BackColor = Theme.Accent;
-        lockPanel.Visible = false;
-
-        var title = new Label();
-        title.Text = "NextDNS-Dash is locked";
-        title.ForeColor = Theme.Text;
-        title.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
-        title.AutoSize = true;
-        title.Margin = new Padding(0, 0, 0, 6);
-
-        lockStatus = new Label();
-        lockStatus.Text = "Unlock with Windows Hello to continue.";
-        lockStatus.ForeColor = Color.FromArgb(0xAD, 0xB5, 0xBD);
-        lockStatus.Font = new Font("Segoe UI", 9F);
-        lockStatus.AutoSize = true;
-        lockStatus.MaximumSize = new Size(440, 0);
-        lockStatus.TextAlign = ContentAlignment.MiddleCenter;
-        lockStatus.Margin = new Padding(0, 0, 0, 12);
-
-        unlockButton = MakeButton("Unlock");
-        unlockButton.Click += delegate { BeginUnlock(); };
-
-        setupButton = MakeButton("Open sign-in settings");
-        setupButton.Visible = false;
-        setupButton.Click += delegate { OpenSignInSettings(); };
-
-        bypassButton = MakeButton("Open without lock");
-        bypassButton.Visible = false;
-        bypassButton.Click += delegate
-        {
-            Settings.SetLock(false);
-            Unlock();
-        };
-
-        var buttons = new FlowLayoutPanel();
-        buttons.AutoSize = true;
-        buttons.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        buttons.FlowDirection = FlowDirection.LeftToRight;
-        buttons.WrapContents = false;
-        buttons.Anchor = AnchorStyles.None;
-        buttons.BackColor = Theme.Accent;
-        buttons.Controls.Add(unlockButton);
-        buttons.Controls.Add(setupButton);
-        buttons.Controls.Add(bypassButton);
-
-        var inner = new FlowLayoutPanel();
-        inner.AutoSize = true;
-        inner.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        inner.FlowDirection = FlowDirection.TopDown;
-        inner.WrapContents = false;
-        inner.Anchor = AnchorStyles.None;
-        inner.BackColor = Theme.Accent;
-        inner.Controls.Add(title);
-        inner.Controls.Add(lockStatus);
-        inner.Controls.Add(buttons);
-
-        var host = new TableLayoutPanel();
-        host.Dock = DockStyle.Fill;
-        host.BackColor = Theme.Accent;
-        host.ColumnCount = 1;
-        host.RowCount = 1;
-        host.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        host.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        host.Controls.Add(inner, 0, 0);
-
-        lockPanel.Controls.Add(host);
-        Controls.Add(lockPanel);
-        lockPanel.BringToFront();
-    }
-
-    static Button MakeButton(string text)
-    {
-        var button = new Button();
-        button.Text = text;
-        button.AutoSize = true;
-        button.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        button.Padding = new Padding(14, 5, 14, 5);
-        button.Margin = new Padding(0, 0, 8, 0);
-        button.FlatStyle = FlatStyle.Flat;
-        button.FlatAppearance.BorderSize = 0;
-        button.FlatAppearance.MouseOverBackColor = Color.FromArgb(0x3A, 0x40, 0x47);
-        button.BackColor = Theme.Hover;
-        button.ForeColor = Theme.Text;
-        button.Font = new Font("Segoe UI", 9F);
-        button.Cursor = Cursors.Hand;
-        return button;
     }
 
     async void BeginUnlock()
@@ -197,10 +94,9 @@ class MainForm : Form
         if (unlockBusy || !locked) return;
 
         unlockBusy = true;
-        unlockButton.Enabled = false;
-        setupButton.Visible = false;
-        bypassButton.Visible = false;
-        lockStatus.Text = "Waiting for Windows Hello...";
+        lockState = "checking";
+        lockMessage = null;
+        SendLockState(core);
         WindowsHello.Recheck();
 
         bool verified = await Task.Factory.StartNew<bool>(delegate
@@ -210,9 +106,7 @@ class MainForm : Form
         });
 
         unlockBusy = false;
-        unlockButton.Enabled = true;
-
-        if (closing) return;
+        if (closing || !locked) return;
 
         if (verified)
         {
@@ -222,19 +116,16 @@ class MainForm : Form
 
         if (!WindowsHello.IsAvailable)
         {
-            lockStatus.Text = HelloReason(WindowsHello.Availability) +
-                " Set it up in Windows Settings, or open without the lock.";
-            unlockButton.Text = "Try again";
-            unlockButton.Visible = true;
-            unlockButton.Enabled = true;
-            setupButton.Visible = true;
-            bypassButton.Visible = true;
-            setupButton.Focus();
-            return;
+            lockState = "unavailable";
+            lockMessage = HelloReason(WindowsHello.Availability) +
+                " Try again, or reset the app data and start fresh.";
         }
-
-        lockStatus.Text = "Windows Hello did not verify. Try again.";
-        unlockButton.Focus();
+        else
+        {
+            lockState = "failed";
+            lockMessage = "Windows Hello did not verify. Try again.";
+        }
+        SendLockState(core);
     }
 
     void Unlock()
@@ -242,18 +133,69 @@ class MainForm : Form
         if (closing) return;
 
         locked = false;
-        lockPanel.Visible = false;
-        web.Visible = true;
+        lockState = "ready";
+        lockMessage = null;
+
+        string url = pendingUrl ?? LaunchUrl();
+        pendingUrl = null;
 
         if (core != null)
         {
-            string url = pendingUrl ?? LaunchUrl();
-            pendingUrl = null;
             try { core.Navigate(url); }
             catch (Exception) { }
         }
 
         web.Focus();
+    }
+
+    // The only way out when Windows Hello cannot run: delete everything the app
+    // stored, drop the lock setting, and start over signed out.
+    async void ResetFromLock()
+    {
+        if (unlockBusy || restarting || closing) return;
+
+        unlockBusy = true;
+        lockState = "working";
+        lockMessage = "Deleting saved data...";
+        SendLockState(core);
+
+        restarting = true;
+        bool cleared = false;
+        try { cleared = await DeleteData(); }
+        finally { restarting = false; }
+
+        if (closing) return;
+
+        if (!cleared)
+        {
+            unlockBusy = false;
+            await ReopenBrowser();
+            if (closing) return;
+            lockState = "unavailable";
+            lockMessage = "Saved data could not be deleted. Close NextDNS-Dash, delete the data folder, then try again.";
+            SendLockState(core);
+            return;
+        }
+
+        Settings.SetLock(false);
+        locked = false;
+        unlockBusy = false;
+        await ReopenBrowser();
+    }
+
+    async Task ReopenBrowser()
+    {
+        try
+        {
+            CreateWebView();
+            await InitAsync(WebUi.IsAvailable ? WebUi.HomeUrl : null);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this,
+                "NextDNS-Dash could not reopen its browser.\r\n\r\n" + ex.Message,
+                "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
     }
 
     static string HelloReason(string status)
@@ -266,15 +208,6 @@ class MainForm : Form
             case "DeviceBusy": return "Windows Hello is busy. Try again.";
             default: return "Windows Hello is not available.";
         }
-    }
-
-    static void OpenSignInSettings()
-    {
-        try
-        {
-            Process.Start(new ProcessStartInfo("ms-settings:signinoptions") { UseShellExecute = true });
-        }
-        catch (Exception) { }
     }
 
     protected override void OnHandleCreated(EventArgs e)
@@ -379,6 +312,15 @@ class MainForm : Form
             return;
         }
 
+        if (locked && !WebUi.HasLockPage)
+        {
+            MessageBox.Show(this,
+                "The lock screen is missing.\r\n\r\nRestore ui\\lock.html, or turn off the launch lock.",
+                "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Close();
+            return;
+        }
+
         string profileDir = Path.Combine(Program.DataDirectory, "profile");
 
         CoreWebView2Environment env =
@@ -405,6 +347,24 @@ class MainForm : Form
         {
             cancelledNavigation = false;
             if (args.Uri.StartsWith("data:") || args.Uri == "about:blank") return;
+
+            // Behind the lock screen only lock.html may load; the dashboard and
+            // Settings stay unreachable until Windows Hello verifies.
+            if (locked)
+            {
+                if (WebUi.IsLockUrl(args.Uri)) return;
+                args.Cancel = true;
+                cancelledNavigation = true;
+                return;
+            }
+
+            if (WebUi.IsLockUrl(args.Uri))
+            {
+                args.Cancel = true;
+                cancelledNavigation = true;
+                return;
+            }
+
             if (Policy.IsAllowed(args.Uri)) return;
             args.Cancel = true;
             cancelledNavigation = true;
@@ -414,6 +374,7 @@ class MainForm : Form
         c.NewWindowRequested += delegate(object s, CoreWebView2NewWindowRequestedEventArgs args)
         {
             args.Handled = true;
+            if (locked) return;
             if (Policy.IsAllowed(args.Uri))
                 c.Navigate(args.Uri);
             else
@@ -439,7 +400,7 @@ class MainForm : Form
         // Downloads are refused unless the Settings toggle allows them.
         c.DownloadStarting += delegate(object s, CoreWebView2DownloadStartingEventArgs args)
         {
-            if (!Settings.DownloadsEnabled) args.Cancel = true;
+            if (locked || !Settings.DownloadsEnabled) args.Cancel = true;
         };
 
         c.ProcessFailed += delegate(object s, CoreWebView2ProcessFailedEventArgs args)
@@ -458,6 +419,10 @@ class MainForm : Form
                 return;
             }
 
+            // The lock page is not part of the browsing history, and a failed
+            // lock page must not fall through to the offline page.
+            if (locked) return;
+
             if (args.IsSuccess)
             {
                 if (showingOffline && c.Source == "about:blank") return;
@@ -472,9 +437,14 @@ class MainForm : Form
         };
 
         if (locked)
+        {
             pendingUrl = startUrl ?? LaunchUrl();
+            c.Navigate(WebUi.LockUrl);
+        }
         else
+        {
             c.Navigate(startUrl ?? LaunchUrl());
+        }
     }
 
     static string LaunchUrl()
@@ -484,6 +454,27 @@ class MainForm : Form
 
     void HandleMessage(CoreWebView2 c, string message)
     {
+        if (message == "lock-init")
+        {
+            SendLockState(c);
+            return;
+        }
+
+        if (locked && message == "unlock")
+        {
+            BeginUnlock();
+            return;
+        }
+
+        if (locked && message == "reset")
+        {
+            ResetFromLock();
+            return;
+        }
+
+        // Nothing else is reachable while the lock screen is up.
+        if (locked) return;
+
         if (message == "init")
         {
             SendState(c);
@@ -522,6 +513,13 @@ class MainForm : Form
         }
     }
 
+    void SendLockState(CoreWebView2 c)
+    {
+        if (c == null) return;
+        try { c.PostWebMessageAsJson(WebUi.LockStateJson(lockState, lockMessage)); }
+        catch (Exception) { }
+    }
+
     static void SendState(CoreWebView2 c)
     {
         SendState(c, null);
@@ -548,75 +546,62 @@ class MainForm : Form
         if (restarting || closing) return;
         restarting = true;
 
-        bool removed = false;
-        Exception failure = null;
-
-        try
-        {
-            core = null;
-            showingOffline = false;
-            cancelledNavigation = false;
-            lastNavigation = null;
-
-            try { web.Dispose(); }
-            catch (Exception) { }
-            web = null;
-
-            for (int attempt = 0; attempt < 10 && !closing; attempt++)
-            {
-                try
-                {
-                    if (Directory.Exists(Program.DataDirectory))
-                        Directory.Delete(Program.DataDirectory, true);
-                    removed = true;
-                    break;
-                }
-                catch (IOException) { }
-                catch (UnauthorizedAccessException) { }
-                await Task.Delay(400);
-            }
-        }
-        catch (Exception ex)
-        {
-            failure = ex;
-        }
-        finally
-        {
-            restarting = false;
-        }
+        bool removed;
+        try { removed = await DeleteData(); }
+        finally { restarting = false; }
 
         if (closing) return;
 
-        if (failure != null)
+        if (!removed)
         {
             MessageBox.Show(this,
-                "NextDNS-Dash could not clear its data.\r\n\r\n" + failure.Message,
+                "Some app data could not be removed. Close NextDNS-Dash and delete the data folder.",
                 "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
-
-        State.Load();
 
         try
         {
             CreateWebView();
-            await InitAsync(failure == null && WebUi.IsAvailable
-                ? WebUi.HomeUrl
-                : null);
+            await InitAsync(WebUi.IsAvailable ? WebUi.HomeUrl : null);
         }
         catch (Exception ex)
         {
             MessageBox.Show(this,
                 "NextDNS-Dash could not reopen its browser.\r\n\r\n" + ex.Message,
                 "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
+        }
+    }
+
+    // Drops the browser and removes data\. Returns true only when the folder is
+    // gone, so callers can refuse to show anything that survived.
+    async Task<bool> DeleteData()
+    {
+        core = null;
+        showingOffline = false;
+        cancelledNavigation = false;
+        lastNavigation = null;
+
+        try { web.Dispose(); }
+        catch (Exception) { }
+        web = null;
+
+        bool removed = false;
+        for (int attempt = 0; attempt < 10 && !closing; attempt++)
+        {
+            try
+            {
+                if (Directory.Exists(Program.DataDirectory))
+                    Directory.Delete(Program.DataDirectory, true);
+                removed = true;
+                break;
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+            await Task.Delay(400);
         }
 
-        if (!removed && failure == null)
-        {
-            MessageBox.Show(this,
-                "Some app data could not be removed. Close NextDNS-Dash and delete the data folder.",
-                "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-        }
+        State.Load();
+        return removed;
     }
 
     void RestartBrowserSoon()

@@ -44,8 +44,10 @@ DLLs\
 ui\
   index.html
   config.html
+  lock.html
   app.css
   app.js
+  lock.js
   logo.svg
   MonaSansVF.woff2
   OFL-MonaSans.txt
@@ -63,11 +65,12 @@ config\      created when a setting changes
   survives **Clear data**.
 - **Security** — **Require Windows sign-in on launch** unlocks the app with
   Windows Hello, PIN, or the account password. Off by default; turn it on in
-  Settings. When enabled, the dashboard stays hidden behind a lock screen until
-  verification succeeds. If Windows
-  Hello is not set up, the lock screen offers Windows sign-in settings and an
-  option to open without the lock. The preference lives in `config\app.ini` and
-  survives **Clear data**.
+  Settings. When enabled, the dashboard stays hidden behind the lock screen at
+  `ui\lock.html` until verification succeeds. If Windows Hello is not
+  available, the only ways out are **Try again** and **Reset app data and
+  open**, which deletes the profile, session and window state and turns the
+  lock off. The preference lives in `config\app.ini` and survives
+  **Clear data**.
 - **Data** — shows the profile path, opens the folder, and clears the profile,
   session and window state. Returns to Home with a fresh profile.
 - **About** — version and non-affiliation note.

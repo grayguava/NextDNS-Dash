@@ -6,7 +6,7 @@ if not exist "%CSC%" (
   exit /b 1
 )
 
-for %%f in (assets\icon.ico assets\icon.svg assets\MonaSans\MonaSansVF.woff2 assets\MonaSans\OFL.txt ui\index.html ui\config.html ui\app.css ui\app.js) do (
+for %%f in (assets\icon.ico assets\icon.svg assets\MonaSans\MonaSansVF.woff2 assets\MonaSans\OFL.txt ui\index.html ui\config.html ui\lock.html ui\app.css ui\app.js ui\lock.js) do (
   if not exist "%%f" (
     echo Missing %%f
     exit /b 1
@@ -36,7 +36,7 @@ copy /y assets\MonaSans\MonaSansVF.woff2 bin\ui\ >nul || exit /b 1
 copy /y assets\MonaSans\OFL.txt bin\ui\OFL-MonaSans.txt >nul || exit /b 1
 copy /y assets\icon.svg bin\ui\logo.svg >nul || exit /b 1
 
-for %%f in (bin\ui\index.html bin\ui\config.html bin\ui\app.css bin\ui\app.js bin\ui\logo.svg bin\ui\MonaSansVF.woff2 bin\ui\OFL-MonaSans.txt) do (
+for %%f in (bin\ui\index.html bin\ui\config.html bin\ui\lock.html bin\ui\app.css bin\ui\app.js bin\ui\lock.js bin\ui\logo.svg bin\ui\MonaSansVF.woff2 bin\ui\OFL-MonaSans.txt) do (
   if not exist "%%f" (
     echo Missing %%f
     exit /b 1

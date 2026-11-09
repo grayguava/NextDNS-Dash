@@ -86,8 +86,10 @@ jobs:
           $uiFiles = @(
             "index.html",
             "config.html",
+            "lock.html",
             "app.css",
             "app.js",
+            "lock.js",
             "logo.svg",
             "MonaSansVF.woff2",
             "OFL-MonaSans.txt"
@@ -102,6 +104,8 @@ jobs:
             if (-not (Test-Path -LiteralPath $doc)) { throw "Missing $doc" }
             Copy-Item -LiteralPath $doc -Destination $root
           }
+          if (-not (Test-Path -LiteralPath "docs")) { throw "Missing docs" }
+          Copy-Item -LiteralPath "docs" -Destination $root -Recurse
 
           $zip = "release/$($env:TAG)_x64.zip"
           Compress-Archive -Path $root -DestinationPath $zip -CompressionLevel Optimal
@@ -117,14 +121,19 @@ jobs:
             "DLLs/WebView2Loader.dll",
             "ui/index.html",
             "ui/config.html",
+            "ui/lock.html",
             "ui/app.css",
             "ui/app.js",
+            "ui/lock.js",
             "ui/logo.svg",
             "ui/MonaSansVF.woff2",
             "ui/OFL-MonaSans.txt",
             "LICENSE",
             "NOTICE",
-            "README.md"
+            "README.md",
+            "docs/usage.md",
+            "docs/security.md",
+            "docs/build.md"
           )
           foreach ($file in $required) {
             if (-not (Test-Path -LiteralPath (Join-Path "$check/nextdns-dash" $file))) {

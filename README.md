@@ -25,7 +25,7 @@ dashboard on demand. The browsing profile stays in the same folder.
 
 The app starts on Home: the NextDNS logo, **Open NextDNS Dashboard**, and
 **Settings**. The dashboard opens in the same window and signs in through the
-NextDNS site. With **Require Windows sign-in on launch** enabled (the default),
+NextDNS site. With **Require Windows sign-in on launch** turned on in Settings,
 Windows asks for Windows Hello before Home appears.
 
 The first launch creates `data\profile` beside the exe. The session lives there,
@@ -62,8 +62,9 @@ config\      created when a setting changes
   to the user's Downloads folder. The preference lives in `config\app.ini` and
   survives **Clear data**.
 - **Security** — **Require Windows sign-in on launch** unlocks the app with
-  Windows Hello, PIN, or the account password. On by default. The dashboard
-  stays hidden behind a lock screen until verification succeeds. If Windows
+  Windows Hello, PIN, or the account password. Off by default; turn it on in
+  Settings. When enabled, the dashboard stays hidden behind a lock screen until
+  verification succeeds. If Windows
   Hello is not set up, the lock screen offers Windows sign-in settings and an
   option to open without the lock. The preference lives in `config\app.ini` and
   survives **Clear data**.

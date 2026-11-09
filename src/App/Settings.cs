@@ -10,7 +10,7 @@ static class Settings
     static Settings()
     {
         DownloadsEnabled = true;
-        LockOnLaunch = true;
+        LockOnLaunch = false;
     }
 
     static string FilePath
@@ -21,7 +21,7 @@ static class Settings
     public static void Load()
     {
         DownloadsEnabled = true;
-        LockOnLaunch = true;
+        LockOnLaunch = false;
 
         try
         {

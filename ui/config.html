@@ -19,6 +19,20 @@
 
     <section class="panel">
         <div class="panel-head">
+            <h2 class="panel-title">Session</h2>
+        </div>
+        <label class="setting">
+            <span class="setting-text">
+                <strong>Save my session</strong>
+                <small>Off by default. When on, the browser profile is saved and you stay signed in.</small>
+            </span>
+            <input type="checkbox" id="save-session">
+            <span class="switch" aria-hidden="true"></span>
+        </label>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
             <h2 class="panel-title">Downloads</h2>
         </div>
         <label class="setting">
@@ -29,21 +43,6 @@
             <input type="checkbox" id="downloads">
             <span class="switch" aria-hidden="true"></span>
         </label>
-    </section>
-
-    <section class="panel">
-        <div class="panel-head">
-            <h2 class="panel-title">Security</h2>
-        </div>
-        <label class="setting">
-            <span class="setting-text">
-                <strong>Require Windows sign-in on launch</strong>
-                <small>Unlock with Windows Hello, PIN, or your account password before the app opens.</small>
-            </span>
-            <input type="checkbox" id="lock">
-            <span class="switch" aria-hidden="true"></span>
-        </label>
-        <p class="setting-note" id="lock-note" hidden></p>
     </section>
 
     <section class="panel">
@@ -74,6 +73,14 @@
     <div class="dialog-actions">
         <button class="btn btn-secondary" id="cancel-clear" type="button">Cancel</button>
         <button class="btn btn-danger-solid" id="confirm-clear" type="button">Clear data</button>
+    </div>
+</dialog>
+<dialog id="private-dialog" aria-labelledby="private-title">
+    <h2 id="private-title">Switch to private mode?</h2>
+    <p>This deletes the saved browser profile and signs you out. The app will not keep your session after it closes.</p>
+    <div class="dialog-actions">
+        <button class="btn btn-secondary" id="cancel-private" type="button">Cancel</button>
+        <button class="btn btn-danger-solid" id="confirm-private" type="button">Switch to private</button>
     </div>
 </dialog>
 </body>

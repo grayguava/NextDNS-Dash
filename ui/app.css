@@ -52,81 +52,6 @@ body.config-body {
     padding: 36px 10% 48px;
 }
 
-body.lock-body {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 24px;
-}
-
-.lock {
-    width: 100%;
-    max-width: 340px;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    text-align: center;
-}
-
-.lock-logo {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 4px;
-    object-fit: contain;
-}
-
-.lock-title {
-    margin: 0;
-    font-size: 19px;
-    font-weight: 600;
-}
-
-.lock-text {
-    margin: 0 0 6px;
-    color: var(--muted);
-    font-size: 13.5px;
-    line-height: 1.5;
-}
-
-.lock-link {
-    align-self: center;
-    padding: 4px 2px;
-    border: 0;
-    background: none;
-    color: #91989f;
-    font: inherit;
-    font-size: 12.5px;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    cursor: pointer;
-}
-
-.lock-link:hover {
-    color: var(--muted);
-}
-
-.lock-link:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-}
-
-.lock-confirm {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 16px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--surface);
-    text-align: left;
-}
-
-.lock-confirm .lock-text {
-    margin: 0;
-}
-
 a {
     color: var(--accent);
 }
@@ -446,17 +371,6 @@ a {
 .setting input:focus-visible + .switch {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
-}
-
-.setting input:disabled + .switch {
-    opacity: 0.45;
-}
-
-.setting-note {
-    margin: 10px 0 0;
-    color: #91989f;
-    font-size: 12.5px;
-    line-height: 1.45;
 }
 
 @media (prefers-reduced-motion: reduce) {

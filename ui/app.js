@@ -21,23 +21,8 @@
         var downloads = document.getElementById("downloads");
         if (downloads) downloads.checked = state.downloads === true;
 
-        var lock = document.getElementById("lock");
-        if (lock) {
-            lock.checked = state.lock === true;
-            lock.disabled = state.lockAvailable === false;
-        }
-
-        var lockNote = document.getElementById("lock-note");
-        if (lockNote) {
-            var note = "";
-            if (state.lockAvailable === false) {
-                note = "Windows Hello is not set up on this PC. Set it up in Windows Settings to use the lock.";
-            } else if (state.lockError) {
-                note = state.lockError;
-            }
-            lockNote.textContent = note;
-            lockNote.hidden = note === "";
-        }
+        var saveSession = document.getElementById("save-session");
+        if (saveSession) saveSession.checked = state.saveSession === true;
     }
 
     if (api) {
@@ -53,10 +38,28 @@
         });
     }
 
-    var lock = document.getElementById("lock");
-    if (lock) {
-        lock.addEventListener("change", function () {
-            post("lock:" + (this.checked ? "on" : "off"));
+    var saveSession = document.getElementById("save-session");
+    var privateDialog = document.getElementById("private-dialog");
+    if (saveSession) {
+        saveSession.addEventListener("change", function () {
+            if (this.checked) {
+                post("save-session:on");
+                return;
+            }
+            if (!privateDialog) {
+                post("save-session:off");
+                return;
+            }
+            var box = this;
+            box.checked = true;
+            privateDialog.showModal();
+            document.getElementById("cancel-private").onclick = function () {
+                privateDialog.close();
+            };
+            document.getElementById("confirm-private").onclick = function () {
+                privateDialog.close();
+                post("save-session:off");
+            };
         });
     }
 

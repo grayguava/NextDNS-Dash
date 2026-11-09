@@ -5,23 +5,25 @@ using System.Text;
 static class Settings
 {
     public static bool DownloadsEnabled { get; private set; }
-    public static bool LockOnLaunch { get; private set; }
+    public static bool SaveSession { get; private set; }
+
+    public static bool PrivateMode { get { return !SaveSession; } }
 
     static Settings()
     {
         DownloadsEnabled = true;
-        LockOnLaunch = false;
+        SaveSession = false;
     }
 
     static string FilePath
     {
-        get { return Path.Combine(Program.ConfigDirectory, "app.ini"); }
+        get { return Path.Combine(Program.DataDirectory, "appConfig.ini"); }
     }
 
     public static void Load()
     {
         DownloadsEnabled = true;
-        LockOnLaunch = false;
+        SaveSession = false;
 
         try
         {
@@ -40,8 +42,8 @@ static class Settings
 
                 if (key == "downloads")
                     DownloadsEnabled = value != "off" && value != "0" && value != "false";
-                if (key == "lock")
-                    LockOnLaunch = value != "off" && value != "0" && value != "false";
+                if (key == "save_session")
+                    SaveSession = value == "on" || value == "1" || value == "true";
             }
         }
         catch (IOException) { }
@@ -57,25 +59,25 @@ static class Settings
         return true;
     }
 
-    public static bool SetLock(bool enabled)
+    public static bool SetSaveSession(bool enabled)
     {
-        if (enabled == LockOnLaunch) return false;
+        if (enabled == SaveSession) return false;
 
-        LockOnLaunch = enabled;
+        SaveSession = enabled;
         Save();
         return true;
     }
 
-    static void Save()
+    public static void Save()
     {
         var text = new StringBuilder();
         text.AppendLine("# NextDNS-Dash settings");
         text.AppendLine("downloads=" + (DownloadsEnabled ? "on" : "off"));
-        text.AppendLine("lock=" + (LockOnLaunch ? "on" : "off"));
+        text.AppendLine("save_session=" + (SaveSession ? "on" : "off"));
 
         try
         {
-            Directory.CreateDirectory(Program.ConfigDirectory);
+            Directory.CreateDirectory(Program.DataDirectory);
             string path = FilePath;
             string temp = path + ".tmp";
             File.WriteAllText(temp, text.ToString(), Encoding.UTF8);

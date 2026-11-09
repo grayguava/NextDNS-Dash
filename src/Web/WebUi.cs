@@ -8,26 +8,15 @@ static class WebUi
     public const string LocalHost = "nextdns-dash.localhost";
     public const string HomeUrl = "https://" + LocalHost + "/index.html";
     public const string ConfigUrl = "https://" + LocalHost + "/config.html";
-    public const string LockUrl = "https://" + LocalHost + "/lock.html";
 
     public static string UiDirectory
     {
-        get { return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ui"); }
+        get { return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "UI"); }
     }
 
     public static bool IsAvailable
     {
         get { return File.Exists(Path.Combine(UiDirectory, "index.html")); }
-    }
-
-    public static bool HasLockPage
-    {
-        get { return File.Exists(Path.Combine(UiDirectory, "lock.html")); }
-    }
-
-    public static bool IsLockUrl(string url)
-    {
-        return string.Equals(url, LockUrl, StringComparison.OrdinalIgnoreCase);
     }
 
     public static void Map(CoreWebView2 core)
@@ -45,23 +34,13 @@ static class WebUi
             string.Equals(u.Host, LocalHost, StringComparison.OrdinalIgnoreCase);
     }
 
-    public static string StateJson(string lockError)
+    public static string StateJson()
     {
         return "{\"type\":\"state\"" +
             ",\"version\":" + Quote(BuildInfo.Version) +
             ",\"downloads\":" + (Settings.DownloadsEnabled ? "true" : "false") +
-            ",\"lock\":" + (Settings.LockOnLaunch ? "true" : "false") +
-            ",\"lockAvailable\":" + (WindowsHello.IsAvailable ? "true" : "false") +
-            (lockError == null ? "" : ",\"lockError\":" + Quote(lockError)) +
+            ",\"saveSession\":" + (Settings.SaveSession ? "true" : "false") +
             ",\"dataDir\":" + Quote(Program.DataDirectory) +
-            "}";
-    }
-
-    public static string LockStateJson(string state, string message)
-    {
-        return "{\"type\":\"lock\"" +
-            ",\"state\":" + Quote(state) +
-            (message == null ? "" : ",\"message\":" + Quote(message)) +
             "}";
     }
 

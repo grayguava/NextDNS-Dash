@@ -65,7 +65,7 @@ jobs:
           $ErrorActionPreference = "Stop"
           $root = "release/nextdns-dash"
           $dll = "$root/DLLs"
-          $ui = "$root/ui"
+          $ui = "$root/UI"
           New-Item -ItemType Directory -Force -Path $dll, $ui | Out-Null
 
           if (-not (Test-Path -LiteralPath "bin/NextDNS-Dash.exe")) {
@@ -86,16 +86,14 @@ jobs:
           $uiFiles = @(
             "index.html",
             "config.html",
-            "lock.html",
             "app.css",
             "app.js",
-            "lock.js",
             "logo.svg",
             "MonaSansVF.woff2",
             "OFL-MonaSans.txt"
           )
           foreach ($file in $uiFiles) {
-            $source = "bin/ui/$file"
+            $source = "bin/UI/$file"
             if (-not (Test-Path -LiteralPath $source)) { throw "Missing $source" }
             Copy-Item -LiteralPath $source -Destination $ui
           }
@@ -119,15 +117,13 @@ jobs:
           $required = @(
             "NextDNS-Dash.exe",
             "DLLs/WebView2Loader.dll",
-            "ui/index.html",
-            "ui/config.html",
-            "ui/lock.html",
-            "ui/app.css",
-            "ui/app.js",
-            "ui/lock.js",
-            "ui/logo.svg",
-            "ui/MonaSansVF.woff2",
-            "ui/OFL-MonaSans.txt",
+            "UI/index.html",
+            "UI/config.html",
+            "UI/app.css",
+            "UI/app.js",
+            "UI/logo.svg",
+            "UI/MonaSansVF.woff2",
+            "UI/OFL-MonaSans.txt",
             "LICENSE",
             "NOTICE",
             "README.md",

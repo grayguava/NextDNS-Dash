@@ -61,6 +61,8 @@ static class State
         catch (IOException) { return; }
         catch (UnauthorizedAccessException) { return; }
 
+        if (Settings.PrivateMode) lastUrl = null;
+
         if (!haveX || !haveY || !haveWidth || !haveHeight) return;
 
         var bounds = new Rectangle(x, y, width, height);
@@ -85,7 +87,7 @@ static class State
         text.AppendLine("width=" + bounds.Width.ToString(CultureInfo.InvariantCulture));
         text.AppendLine("height=" + bounds.Height.ToString(CultureInfo.InvariantCulture));
         text.AppendLine("maximized=" + (form.WindowState == FormWindowState.Maximized ? "1" : "0"));
-        if (lastUrl != null) text.AppendLine("last_url=" + lastUrl);
+        if (lastUrl != null && Settings.SaveSession) text.AppendLine("last_url=" + lastUrl);
 
         try
         {

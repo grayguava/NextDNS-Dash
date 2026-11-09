@@ -22,8 +22,7 @@ static class Policy
         if (!string.Equals(u.Host, WebUi.LocalHost, StringComparison.OrdinalIgnoreCase)) return false;
 
         string path = u.AbsolutePath;
-        return path == "/" || path == "/index.html" || path == "/config.html" ||
-            path == "/lock.html";
+        return path == "/" || path == "/index.html" || path == "/config.html";
     }
 
     public static bool IsAllowed(string uri)

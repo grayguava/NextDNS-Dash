@@ -123,7 +123,7 @@ class MainForm : Form
         else
         {
             lockState = "failed";
-            lockMessage = "Windows Hello did not verify. Try again.";
+            lockMessage = "Windows Hello did not verify. Try again, or reset the app data if you cannot sign in.";
         }
         SendLockState(core);
     }
@@ -586,7 +586,7 @@ class MainForm : Form
         web = null;
 
         bool removed = false;
-        for (int attempt = 0; attempt < 10 && !closing; attempt++)
+        for (int attempt = 0; attempt < 25 && !closing; attempt++)
         {
             try
             {

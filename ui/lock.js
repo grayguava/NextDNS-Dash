@@ -26,7 +26,7 @@
 
         if (state.state === "checking") message = "Waiting for Windows Hello\u2026";
         else if (state.state === "working") message = "Deleting saved data\u2026";
-        else if (state.state === "failed" && !message) message = "Windows Hello did not verify. Try again.";
+        else if (state.state === "failed" && !message) message = "Windows Hello did not verify. Try again, or reset the app data if you cannot sign in.";
         else if (state.state === "unavailable" && !message) message = "Windows Hello is not available.";
 
         text.textContent = message || "Unlock with Windows Hello to continue.";
@@ -36,8 +36,8 @@
             : "Unlock with Windows Hello";
         unlock.disabled = busy;
 
-        if (state.state !== "unavailable") showConfirm(false);
-        reset.hidden = state.state !== "unavailable" || !confirm.hidden;
+        if (busy) showConfirm(false);
+        reset.hidden = busy || !confirm.hidden;
     }
 
     unlock.addEventListener("click", function () {

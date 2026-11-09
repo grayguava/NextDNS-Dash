@@ -66,10 +66,10 @@ config\      created when a setting changes
 - **Security** — **Require Windows sign-in on launch** unlocks the app with
   Windows Hello, PIN, or the account password. Off by default; turn it on in
   Settings. When enabled, the dashboard stays hidden behind the lock screen at
-  `ui\lock.html` until verification succeeds. If Windows Hello is not
-  available, the only ways out are **Try again** and **Reset app data and
-  open**, which deletes the profile, session and window state and turns the
-  lock off. The preference lives in `config\app.ini` and survives
+  `ui\lock.html` until verification succeeds. If verification fails or Windows
+  Hello is not available, the only ways out are **Try again** and **Reset app
+  data and open**, which deletes the profile, session and window state and
+  turns the lock off. The preference lives in `config\app.ini` and survives
   **Clear data**.
 - **Data** — shows the profile path, opens the folder, and clears the profile,
   session and window state. Returns to Home with a fresh profile.

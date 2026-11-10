@@ -63,6 +63,14 @@
         });
     }
 
+    var openDashboard = document.getElementById("open-dashboard");
+    if (openDashboard) {
+        openDashboard.addEventListener("click", function (event) {
+            event.preventDefault();
+            post("open-dashboard");
+        });
+    }
+
     var openData = document.getElementById("open-data");
     if (openData) {
         openData.addEventListener("click", function () {

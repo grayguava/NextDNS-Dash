@@ -4,7 +4,8 @@
 
 The app opens Home: the NextDNS logo, **Open NextDNS Dashboard**, and
 **Settings**. The dashboard opens in the same window and signs in through the
-NextDNS site.
+NextDNS site. **Open NextDNS Dashboard** returns to the last dashboard page you
+visited; with **Save my session** on, that page survives a restart.
 
 Private mode is the default, so the session is not saved and you sign in again
 after each restart. Turn on **Save my session** in Settings to keep the session.

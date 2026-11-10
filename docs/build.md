@@ -65,6 +65,8 @@ The pages in `ui\` are plain HTML, CSS and JavaScript. Edit them, run
   `app.css`; `app.js` handles the Settings page and the host messages.
 - Pages post `init` to request state. The host replies with
   `{"type":"state","version":"...","downloads":true|false,"saveSession":true|false,"dataDir":"..."}`.
+- Home posts `open-dashboard`; the host opens the last dashboard URL it knows,
+  or the default dashboard when there is none.
 - In private mode the host injects `PrivateBadge.cs` with
   `AddScriptToExecuteOnDocumentCreatedAsync`, so the badge also appears on the
   dashboard and the offline page.

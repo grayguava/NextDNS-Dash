@@ -353,6 +353,12 @@ class MainForm : Form
             return;
         }
 
+        if (message == "open-dashboard")
+        {
+            c.Navigate(State.LastUrl ?? StartUrl);
+            return;
+        }
+
         if (message == "open-data-folder")
         {
             OpenDataFolder();
@@ -626,7 +632,10 @@ class MainForm : Form
             case CoreWebView2WebErrorStatus.CannotConnect:
             case CoreWebView2WebErrorStatus.Timeout:
             case CoreWebView2WebErrorStatus.Disconnected:
-            case CoreWebView2WebErrorStatus.ConnectionAborted:
+            // ConnectionAborted is ERR_ABORTED: Chromium reports it when a
+            // navigation turns into a download or is cancelled, not when the
+            // network is down. Treating it as offline put the error page over a
+            // working dashboard during exports.
             case CoreWebView2WebErrorStatus.ConnectionReset:
             case CoreWebView2WebErrorStatus.HostNameNotResolved:
             case CoreWebView2WebErrorStatus.ServerUnreachable:

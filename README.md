@@ -3,14 +3,34 @@
 Portable Windows desktop wrapper for the [NextDNS](https://my.nextdns.io)
 dashboard. One small exe, no installer and no background service: it opens a
 local Home screen in a native window backed by the WebView2 runtime and
-launches the dashboard on demand. The browsing profile stays in the same folder
-when you choose to save your session; private mode is the default.
+launches the dashboard on demand.
 
 > [!NOTE]
 > This is an unofficial, community-made client. It is not affiliated with,
 > endorsed by, sponsored by, or supported by NextDNS. **NextDNS** and the
 > NextDNS logo are trademarks of their respective owner and are used here only
 > to describe what this app connects to. No trademark rights are claimed.
+
+## Features
+
+- Private by default: the app runs an InPrivate WebView2 profile and signs you
+  out when it closes.
+- **Save my session** keeps the profile and stays signed in across restarts.
+- Local Home with **Open NextDNS Dashboard** and **Settings**.
+- The dashboard runs in the same window. Only HTTPS hosts on the build's
+  allowlist stay in-app; everything else opens in your default browser.
+- Downloads are on by default and save to your Downloads folder. Settings can
+  block them.
+- An offline page retries automatically when the connection returns.
+- One instance: a second launch focuses the existing window.
+- Window size, position and maximized state are restored.
+- Camera, microphone, notifications, geolocation and other web permissions are
+  denied.
+- Chromium background traffic is off: no SmartScreen checks, sync, component
+  updates or pings.
+- **Settings → Clear data** removes the profile, session and window state, and
+  keeps your settings.
+- No installer, no service, and no network traffic from the wrapper itself.
 
 ## Requirements
 
@@ -36,8 +56,8 @@ it. `data\appConfig.ini` appears when you change a setting. To start over, use
   portable layout.
 - [Security and privacy](docs/security.md): private mode, the network policy,
   and the Chromium traffic that is switched off.
-- [Build and release](docs/build.md): `build.bat`, source layout, editing the
-  UI, releases and the unsigned-binary note.
+- [Build and release](docs/build.md): `build.bat`, source layout, colors,
+  editing the UI, releases and the unsigned-binary note.
 
 ## License
 

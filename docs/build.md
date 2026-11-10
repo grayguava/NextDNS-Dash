@@ -35,6 +35,7 @@ src\App\
   State.cs          data\state.ini (window bounds, last URL)
 src\Shell\
   MainForm.cs       window, WebView, navigation, offline page
+  ClearingForm.cs   prompt shown while the private profile is removed
   Backdrop.cs       DWM caption and border colours
   Theme.cs          shared colours
 src\Web\

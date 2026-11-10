@@ -41,9 +41,12 @@ class MainForm : Form
     bool cancelledNavigation;
     bool restarting;
     bool closing;
+    bool exitStarted;
+    bool exitReady;
     bool inPrivateActive;
     string lastNavigation;
     NetworkAvailabilityChangedEventHandler networkHandler;
+    ClearingForm clearing;
 
     public MainForm()
     {
@@ -635,18 +638,57 @@ class MainForm : Form
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        closing = true;
-        State.Save(this);
-
-        if (Settings.PrivateMode)
+        // Private exit has to tear down the browser and remove the profile. Show
+        // the clearing prompt first and do the slow part off the UI thread, so
+        // the window never sits there blank.
+        if (Settings.PrivateMode && !exitReady)
         {
-            try { if (web != null) web.Dispose(); }
-            catch (Exception) { }
-            web = null;
-            DeleteProfileBestEffort();
+            e.Cancel = true;
+            if (exitStarted) return;
+
+            exitStarted = true;
+            closing = true;
+            State.Save(this);
+
+            clearing = new ClearingForm();
+            clearing.Show();
+            Hide();
+
+            BeginInvoke((MethodInvoker)BeginExit);
+            return;
         }
 
+        closing = true;
+        State.Save(this);
         base.OnFormClosing(e);
+    }
+
+    async void BeginExit()
+    {
+        try
+        {
+            if (web != null)
+            {
+                try { web.Dispose(); }
+                catch (Exception) { }
+                web = null;
+            }
+
+            await Task.Run((Action)DeleteProfileBestEffort);
+        }
+        catch (Exception) { }
+        finally
+        {
+            if (clearing != null)
+            {
+                try { clearing.Close(); }
+                catch (Exception) { }
+                clearing = null;
+            }
+
+            exitReady = true;
+            Close();
+        }
     }
 
     static void DeleteProfileBestEffort()

@@ -10,8 +10,9 @@ every page, including the dashboard, while InPrivate is active.
 Private mode is not a no-write mode. WebView2 still creates and uses a user data
 folder for shared resources, and the app writes `data\appConfig.ini` for settings
 and `data\state.ini` for window bounds. The app clears `data\profile` before each
-private session and again on close. If a WebView2 child process still holds the
-folder at close, the next private start clears it before the browser starts.
+private session and again on close. Closing shows a short clearing prompt while
+the profile is removed. If a WebView2 child process still holds the folder at
+close, the next private start clears it before the browser starts.
 Pagefile, hibernation and crash dumps are outside the app's control; full-disk
 encryption covers those.
 

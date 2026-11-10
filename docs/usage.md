@@ -17,8 +17,12 @@ of every page, including the dashboard.
 ### Downloads
 
 Allow or block downloads. On by default; allowed files save to the user's
-Downloads folder. The preference lives in `data\appConfig.ini` and survives
-**Clear data**.
+Downloads folder. Starting a download keeps the dashboard open. The preference
+lives in `data\appConfig.ini` and survives **Clear data**.
+
+Links to hosts outside `nextdns.io` open in your default browser, so downloads
+hosted elsewhere, such as the Android app on `storage.googleapis.com`, download
+there rather than in the app.
 
 ### Session
 
@@ -36,8 +40,8 @@ profile and signs you out. The preference lives in `data\appConfig.ini` and surv
 
 ### Data
 
-Shows the profile path, opens the folder, and clears the profile, session and
-window state. Returns to Home with a fresh profile. Settings are kept.
+Shows the data folder path, opens the folder, and clears the profile, session
+and window state. Returns to Home with a fresh profile. Settings are kept.
 
 ### About
 

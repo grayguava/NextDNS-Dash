@@ -13,6 +13,20 @@ $packageSha256 = '90778deb1b77e36292828b4b5833c9255c27533f40e0ddd55891ae718944ed
 $cache = Join-Path $root 'build\cache\webview2'
 $marker = Join-Path $cache '.version'
 
+# Get-FileHash is missing on some Windows PowerShell hosts; hash with .NET.
+function Get-Sha256([string]$Path) {
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $stream = [System.IO.File]::OpenRead($Path)
+        try {
+            $bytes = $sha.ComputeHash($stream)
+            return ([BitConverter]::ToString($bytes) -replace '-', '').ToLowerInvariant()
+        }
+        finally { $stream.Dispose() }
+    }
+    finally { $sha.Dispose() }
+}
+
 $entries = @(
     @{ Name = 'Microsoft.Web.WebView2.Core.dll';     Entry = 'lib/net462/Microsoft.Web.WebView2.Core.dll' },
     @{ Name = 'Microsoft.Web.WebView2.WinForms.dll'; Entry = 'lib/net462/Microsoft.Web.WebView2.WinForms.dll' },
@@ -57,7 +71,7 @@ try {
     Write-Host "Downloading WebView2 SDK $version"
     Invoke-WebRequest -Uri $packageUrl -OutFile $package -UseBasicParsing
 
-    $actual = (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash.ToLowerInvariant()
+    $actual = Get-Sha256 $package
     if ($actual -ne $packageSha256) {
         throw "Package hash mismatch: expected $packageSha256, got $actual"
     }
@@ -74,7 +88,7 @@ try {
             $file = Join-Path $temp $entry.Name
             [IO.Compression.ZipFileExtensions]::ExtractToFile($source, $file, $true)
 
-            $actual = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            $actual = Get-Sha256 $file
             if ($actual -ne $hashes[$entry.Name]) {
                 throw "Hash mismatch for $($entry.Name): expected $($hashes[$entry.Name]), got $actual"
             }
@@ -91,7 +105,7 @@ try {
     $shaDir = Join-Path $cache 'SHA256'
     New-Item -ItemType Directory -Path $shaDir -Force | Out-Null
     foreach ($entry in $entries) {
-        $hash = (Get-FileHash -LiteralPath (Join-Path $cache $entry.Name) -Algorithm SHA256).Hash.ToLowerInvariant()
+        $hash = Get-Sha256 (Join-Path $cache $entry.Name)
         Set-Content -LiteralPath (Join-Path $shaDir ($entry.Name + '.sha256')) -Value "$hash  $($entry.Name)" -Encoding ascii
     }
 

@@ -58,11 +58,11 @@ full-disk encryption, not an app-level flag.
 
 ## Network policy
 
-- In-app navigation stays on HTTPS `nextdns.io` and its subdomains, plus the
-  local Home and Settings pages.
+- In-app navigation stays on HTTPS hosts listed in `build\.properties`
+  (`nextdns.io` for this build), plus the local Home and Settings pages.
 - Other http(s) links open in the default browser; other schemes are dropped.
-- Popups pointed at `nextdns.io` load in the same window; everything else goes
-  to the default browser.
+- Popups pointed at an allowed host load in the same window; everything else
+  goes to the default browser.
 - The app denies camera, microphone, notifications, geolocation and every other
   web permission request.
 - Downloads are refused unless the Settings toggle allows them.

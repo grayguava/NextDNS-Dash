@@ -63,15 +63,27 @@ jobs:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           $ErrorActionPreference = "Stop"
-          $root = "release/nextdns-dash"
+
+          $props = @{}
+          foreach ($raw in Get-Content -LiteralPath "build/.properties") {
+            $line = $raw.Trim()
+            if ($line.Length -eq 0 -or $line[0] -eq '#' -or $line[0] -eq ';') { continue }
+            $eq = $line.IndexOf('=')
+            if ($eq -lt 1) { continue }
+            $props[$line.Substring(0, $eq).Trim().ToLowerInvariant()] = $line.Substring($eq + 1).Trim()
+          }
+          $appName = $props["appname"]
+          if (-not $appName) { throw "build/.properties: missing appName" }
+
+          $root = "release/$appName"
           $dll = "$root/DLLs"
           $ui = "$root/UI"
           New-Item -ItemType Directory -Force -Path $dll, $ui | Out-Null
 
-          if (-not (Test-Path -LiteralPath "bin/NextDNS-Dash.exe")) {
-            throw "Missing bin/NextDNS-Dash.exe"
+          if (-not (Test-Path -LiteralPath "bin/$appName.exe")) {
+            throw "Missing bin/$appName.exe"
           }
-          Copy-Item -LiteralPath "bin/NextDNS-Dash.exe" -Destination $root
+          Copy-Item -LiteralPath "bin/$appName.exe" -Destination $root
 
           $dllFiles = @(
             "bin/DLLs/Microsoft.Web.WebView2.Core.dll",
@@ -88,6 +100,8 @@ jobs:
             "config.html",
             "app.css",
             "app.js",
+            "theme.css",
+            "site.js",
             "logo.svg",
             "MonaSansVF.woff2",
             "OFL-MonaSans.txt"
@@ -115,12 +129,14 @@ jobs:
           if (Test-Path -LiteralPath $check) { Remove-Item $check -Recurse -Force }
           Expand-Archive -LiteralPath $zip -DestinationPath $check
           $required = @(
-            "NextDNS-Dash.exe",
+            "$appName.exe",
             "DLLs/WebView2Loader.dll",
             "UI/index.html",
             "UI/config.html",
             "UI/app.css",
             "UI/app.js",
+            "UI/theme.css",
+            "UI/site.js",
             "UI/logo.svg",
             "UI/MonaSansVF.woff2",
             "UI/OFL-MonaSans.txt",
@@ -132,14 +148,14 @@ jobs:
             "docs/build.md"
           )
           foreach ($file in $required) {
-            if (-not (Test-Path -LiteralPath (Join-Path "$check/nextdns-dash" $file))) {
+            if (-not (Test-Path -LiteralPath (Join-Path "$check/$appName" $file))) {
               throw "Package missing $file"
             }
           }
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: nextdns-dash-x64-${{ steps.version.outputs.version }}
+          name: ${{ github.event.repository.name }}-x64-${{ steps.version.outputs.version }}
           path: |
             release/*.zip
             release/*.sha256

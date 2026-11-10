@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
-<title>NextDNS-Dash &mdash; Settings</title>
+<title>Settings</title>
+<link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="app.css">
+<script src="site.js"></script>
 <script src="app.js" defer></script>
 </head>
 <body class="config-body" data-page="config">
@@ -60,9 +62,9 @@
     <section class="panel">
         <div class="panel-head">
             <h2 class="panel-title">About</h2>
-            <p class="muted"><strong>NextDNS-Dash</strong> <span id="version"></span></p>
+            <p class="muted"><strong id="app-name"></strong> <span id="version"></span></p>
         </div>
-        <p class="muted">Unofficial client. Not affiliated with, endorsed, or supported by <a href="https://nextdns.io">NextDNS</a>. View code on <a href="https://github.com/grayguava/NextDNS-Dash">GitHub</a>.</p>
+        <p class="muted"><span id="affiliation"></span> <a id="project-link" hidden>Source</a></p>
     </section>
 
 </main>

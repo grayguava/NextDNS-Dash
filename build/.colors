@@ -1,0 +1,27 @@
+# Wrapper colors. build.bat reads this file and bakes it into the app.
+#
+# Every value is a hex color: #rgb or #rrggbb.
+#
+# bg            window and page background.
+# surface       buttons, panels, dialogs.
+# surfaceHover  surface on hover.
+# line          borders, rules, switch track when off.
+# text          primary text.
+# muted         secondary text and links.
+# mutedDim      quietest text: helper lines, captions.
+# accent        links, focus ring, primary button, switch when on.
+# accentHover   accent on hover.
+# danger        destructive text and button.
+# dangerHover   danger on hover.
+
+bg=#212529
+surface=#2c3136
+surfaceHover=#363c42
+line=#3a4047
+text=#e9ecef
+muted=#adb5bd
+mutedDim=#91989f
+accent=#00a6ff
+accentHover=#33b8ff
+danger=#ff7b72
+dangerHover=#ff8f87

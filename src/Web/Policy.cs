@@ -3,15 +3,12 @@ using System.Diagnostics;
 
 static class Policy
 {
-    const string DashboardHost = "nextdns.io";
-
-    public static bool IsDashboard(string uri)
+    public static bool IsService(string uri)
     {
         Uri u;
         if (!Uri.TryCreate(uri, UriKind.Absolute, out u)) return false;
         if (u.Scheme != Uri.UriSchemeHttps) return false;
-        return u.Host == DashboardHost ||
-            u.Host.EndsWith("." + DashboardHost, StringComparison.OrdinalIgnoreCase);
+        return SiteProfile.IsAllowedHost(u.Host);
     }
 
     public static bool IsLocalPage(string uri)
@@ -27,7 +24,7 @@ static class Policy
 
     public static bool IsAllowed(string uri)
     {
-        return IsDashboard(uri) || IsLocalPage(uri);
+        return IsService(uri) || IsLocalPage(uri);
     }
 
     public static void OpenExternal(string uri)

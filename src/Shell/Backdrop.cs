@@ -12,9 +12,9 @@ static class Backdrop
     [StructLayout(LayoutKind.Sequential)]
     struct CompositionData { public int Attribute; public IntPtr Data; public int Size; }
 
-    static readonly int RGB = (Theme.Accent.R << 16) | (Theme.Accent.G << 8) | Theme.Accent.B;
+    static readonly int RGB = (Theme.Bg.R << 16) | (Theme.Bg.G << 8) | Theme.Bg.B;
     const int WCA_ACCENT_POLICY = 19;
-    // The tint is opaque, so the gradient state paints the same colour as acrylic
+    // The tint is opaque, so the gradient state paints the same color as acrylic
     // without the per-frame blur cost that makes dragging and resizing lag on Win10.
     const int ACCENT_ENABLE_GRADIENT = 1;
     const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
@@ -54,7 +54,7 @@ static class Backdrop
             return;
         }
 
-        // Windows 10: no caption-colour API, so tint the frame via the accent policy.
+        // Windows 10: no caption-color API, so tint the frame via the accent policy.
         var margins = new Margins { Left = -1, Right = -1, Top = -1, Bottom = -1 };
         DwmExtendFrameIntoClientArea(hwnd, ref margins);
 

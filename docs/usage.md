@@ -58,8 +58,10 @@ DLLs\
 UI\
   index.html
   config.html
+  theme.css
   app.css
   app.js
+  site.js
   logo.svg
   MonaSansVF.woff2
   OFL-MonaSans.txt

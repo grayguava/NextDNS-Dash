@@ -3,6 +3,51 @@
 
     var api = window.chrome && window.chrome.webview;
     var version = document.getElementById("version");
+    var site = window.SITE || {};
+
+    function applySite() {
+        if (site.serviceName) {
+            document.title = document.body.getAttribute("data-page") === "config"
+                ? site.serviceName + " - Settings"
+                : site.serviceName;
+        }
+
+        var logo = document.getElementById("logo");
+        if (logo && site.serviceName) logo.alt = site.serviceName;
+
+        var homeLink = document.getElementById("open-dashboard");
+        if (homeLink) {
+            if (site.homeLabel) homeLink.textContent = site.homeLabel;
+            if (site.homeUrl) homeLink.href = site.homeUrl;
+        }
+
+        var appName = document.getElementById("app-name");
+        if (appName && site.serviceName) appName.textContent = site.serviceName;
+
+        var affiliation = document.getElementById("affiliation");
+        if (affiliation && site.serviceAfnName) {
+            affiliation.textContent = "Unofficial client. Not affiliated with, endorsed, or supported by ";
+            if (site.serviceAfnUrl) {
+                var serviceLink = document.createElement("a");
+                serviceLink.href = site.serviceAfnUrl;
+                serviceLink.textContent = site.serviceAfnName;
+                affiliation.appendChild(serviceLink);
+            } else {
+                affiliation.appendChild(document.createTextNode(site.serviceAfnName));
+            }
+            affiliation.appendChild(document.createTextNode("."));
+        }
+
+        var projectLink = document.getElementById("project-link");
+        if (projectLink) {
+            if (site.projectUrl) {
+                projectLink.href = site.projectUrl;
+                projectLink.hidden = false;
+            } else {
+                projectLink.hidden = true;
+            }
+        }
+    }
 
     function post(message) {
         if (api) api.postMessage(message);
@@ -95,5 +140,6 @@
         });
     }
 
+    applySite();
     post("init");
 })();

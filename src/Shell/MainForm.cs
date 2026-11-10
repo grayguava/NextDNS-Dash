@@ -9,8 +9,6 @@ using Microsoft.Web.WebView2.WinForms;
 
 class MainForm : Form
 {
-    const string StartUrl = "https://my.nextdns.io";
-
     // Keep Chromium's own traffic out of a privacy tool: Edge config, SmartScreen
     // reputation, component updates, crash upload and sync have no part in
     // showing the dashboard.
@@ -52,7 +50,7 @@ class MainForm : Form
     {
         Text = ""; // caption shows icon + buttons only
         Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-        BackColor = Theme.Accent;
+        BackColor = Theme.Bg;
 
         Settings.Load();
         State.Load();
@@ -80,7 +78,7 @@ class MainForm : Form
                 BeginInvoke((MethodInvoker)delegate
                 {
                     if (showingOffline && core != null)
-                        core.Navigate(State.LastUrl ?? StartUrl);
+                        core.Navigate(State.LastUrl ?? SiteProfile.HomeUrl);
                 });
             }
             catch (InvalidOperationException) { }
@@ -92,7 +90,7 @@ class MainForm : Form
     {
         web = new WebView2();
         web.Dock = DockStyle.Fill;
-        web.DefaultBackgroundColor = Theme.Accent;
+        web.DefaultBackgroundColor = Theme.Bg;
         Controls.Add(web);
     }
 
@@ -163,7 +161,7 @@ class MainForm : Form
     void GoHome()
     {
         if (core == null || closing) return;
-        try { core.Navigate(WebUi.IsAvailable ? WebUi.HomeUrl : StartUrl); }
+        try { core.Navigate(WebUi.IsAvailable ? WebUi.HomeUrl : SiteProfile.HomeUrl); }
         catch (Exception) { }
     }
 
@@ -176,8 +174,8 @@ class MainForm : Form
         catch (Exception ex)
         {
             MessageBox.Show(this,
-                "NextDNS-Dash could not start.\r\n\r\n" + ex.Message,
-                "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                SiteProfile.ServiceName + " could not start.\r\n\r\n" + ex.Message,
+                SiteProfile.ServiceName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             Close();
         }
     }
@@ -193,7 +191,7 @@ class MainForm : Form
             MessageBox.Show(this,
                 "The Microsoft Edge WebView2 runtime is not installed.\r\n\r\n" +
                 "Install it from https://developer.microsoft.com/microsoft-edge/webview2/ and try again.",
-                "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                SiteProfile.ServiceName, MessageBoxButtons.OK, MessageBoxIcon.Information);
             Close();
             return;
         }
@@ -207,9 +205,9 @@ class MainForm : Form
             if (!cleared)
             {
                 MessageBox.Show(this,
-                    "NextDNS-Dash could not clear the saved browser profile.\r\n\r\n" +
-                    "Close any other NextDNS-Dash or msedgewebview2 process, then try again.",
-                    "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    SiteProfile.ServiceName + " could not clear the saved browser profile.\r\n\r\n" +
+                    "Close any other " + SiteProfile.ServiceName + " or msedgewebview2 process, then try again.",
+                    SiteProfile.ServiceName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 Close();
                 return;
             }
@@ -342,7 +340,7 @@ class MainForm : Form
 
     static string LaunchUrl()
     {
-        return WebUi.IsAvailable ? WebUi.HomeUrl : StartUrl;
+        return WebUi.IsAvailable ? WebUi.HomeUrl : SiteProfile.HomeUrl;
     }
 
     void HandleMessage(CoreWebView2 c, string message)
@@ -355,7 +353,7 @@ class MainForm : Form
 
         if (message == "open-dashboard")
         {
-            c.Navigate(State.LastUrl ?? StartUrl);
+            c.Navigate(State.LastUrl ?? SiteProfile.HomeUrl);
             return;
         }
 
@@ -428,8 +426,8 @@ class MainForm : Form
             if (!closing)
             {
                 MessageBox.Show(this,
-                    "NextDNS-Dash could not switch session mode.\r\n\r\n" + ex.Message,
-                    "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    SiteProfile.ServiceName + " could not switch session mode.\r\n\r\n" + ex.Message,
+                    SiteProfile.ServiceName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
         finally
@@ -462,8 +460,8 @@ class MainForm : Form
         if (!removed)
         {
             MessageBox.Show(this,
-                "Some app data could not be removed. Close NextDNS-Dash and delete the data folder.",
-                "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                "Some app data could not be removed. Close " + SiteProfile.ServiceName + " and delete the data folder.",
+                SiteProfile.ServiceName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         try
@@ -474,8 +472,8 @@ class MainForm : Form
         catch (Exception ex)
         {
             MessageBox.Show(this,
-                "NextDNS-Dash could not reopen its browser.\r\n\r\n" + ex.Message,
-                "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                SiteProfile.ServiceName + " could not reopen its browser.\r\n\r\n" + ex.Message,
+                SiteProfile.ServiceName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 
@@ -583,8 +581,8 @@ class MainForm : Form
             if (!closing && last != null)
             {
                 MessageBox.Show(this,
-                    "NextDNS-Dash could not restart its browser.\r\n\r\n" + last.Message,
-                    "NextDNS-Dash", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    SiteProfile.ServiceName + " could not restart its browser.\r\n\r\n" + last.Message,
+                    SiteProfile.ServiceName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
         finally
@@ -602,27 +600,42 @@ class MainForm : Form
 
     static string BuildOfflineHtml()
     {
+        string service = EscapeHtml(SiteProfile.ServiceName);
+        string home = EscapeHtml(SiteProfile.HomeUrl);
         string back = WebUi.IsAvailable
             ? "<a class=\"secondary\" href=\"" + WebUi.HomeUrl + "\">Back to home</a>"
             : "";
 
         return "<!doctype html><html><head><meta charset=\"utf-8\"><style>" +
             "html,body{height:100%;margin:0}" +
-            "body{background:#212529;color:#e9ecef;font:15px/1.5 'Segoe UI',sans-serif;" +
+            "body{background:" + Theme.Hex(Theme.Bg) + ";color:" + Theme.Hex(Theme.Text) + ";font:15px/1.5 'Segoe UI',sans-serif;" +
             "display:flex;align-items:center;justify-content:center}" +
             ".box{text-align:center;max-width:420px;padding:24px}" +
             "h1{font-size:18px;font-weight:600;margin:0 0 8px}" +
-            "p{margin:0 0 20px;color:#adb5bd}" +
+            "p{margin:0 0 20px;color:" + Theme.Hex(Theme.Muted) + "}" +
             "a{display:inline-block;margin:0 4px;padding:8px 18px;border-radius:6px;" +
             "text-decoration:none}" +
-            "a.primary{background:#00a6ff;color:#07131c}a.primary:hover{background:#33b8ff}" +
-            "a.secondary{background:#2c3136;color:#e9ecef}a.secondary:hover{background:#3a4047}" +
+            "a.primary{background:" + Theme.Hex(Theme.Accent) + ";color:" + Theme.Hex(Theme.AccentText) + "}" +
+            "a.primary:hover{background:" + Theme.Hex(Theme.AccentHover) + "}" +
+            "a.secondary{background:" + Theme.Hex(Theme.Surface) + ";color:" + Theme.Hex(Theme.Text) + "}" +
+            "a.secondary:hover{background:" + Theme.Hex(Theme.SurfaceHover) + "}" +
             "</style></head><body><div class=\"box\">" +
-            "<h1>Can't reach the dashboard</h1>" +
+            "<h1>Can't reach " + service + "</h1>" +
             "<p>The app retries automatically when the connection comes back.</p>" +
-            "<a class=\"primary\" href=\"https://my.nextdns.io\">Try again</a>" +
+            "<a class=\"primary\" href=\"" + home + "\">Try again</a>" +
             back +
             "</div></body></html>";
+    }
+
+    static string EscapeHtml(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return "";
+        return value
+            .Replace("&", "&amp;")
+            .Replace("<", "&lt;")
+            .Replace(">", "&gt;")
+            .Replace("\"", "&quot;")
+            .Replace("'", "&#39;");
     }
 
     static bool IsOfflineStatus(CoreWebView2WebErrorStatus status)

@@ -26,7 +26,7 @@ static class Program
         LoadBundledAssemblies();
 
         bool created;
-        using (var mutex = new Mutex(true, @"Local\NextDNS-Dash.SingleInstance", out created))
+        using (var mutex = new Mutex(true, @"Local\" + SiteProfile.AppName + ".SingleInstance", out created))
         {
             if (!created)
             {
@@ -58,10 +58,12 @@ static class Program
 
     static void FocusExisting()
     {
-        int self = Process.GetCurrentProcess().Id;
+        Process selfProcess = Process.GetCurrentProcess();
+        int self = selfProcess.Id;
+        string processName = selfProcess.ProcessName;
         for (int attempt = 0; attempt < 10; attempt++)
         {
-            foreach (Process p in Process.GetProcessesByName("NextDNS-Dash"))
+            foreach (Process p in Process.GetProcessesByName(processName))
             {
                 if (p.Id == self) continue;
                 IntPtr h = p.MainWindowHandle;

@@ -71,7 +71,7 @@ static class Settings
     public static void Save()
     {
         var text = new StringBuilder();
-        text.AppendLine("# NextDNS-Dash settings");
+        text.AppendLine("# " + SiteProfile.ServiceName + " settings");
         text.AppendLine("downloads=" + (DownloadsEnabled ? "on" : "off"));
         text.AppendLine("save_session=" + (SaveSession ? "on" : "off"));
 

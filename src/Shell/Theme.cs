@@ -1,9 +1,21 @@
 using System.Drawing;
 
+// Shell colors, generated from build\.colors into ThemeInfo by the build.
 static class Theme
 {
-    // Title bar tint, used for every surface that should read as part of the frame.
-    public static readonly Color Accent = Color.FromArgb(0x21, 0x25, 0x29);
-    public static readonly Color Hover = Color.FromArgb(0x2C, 0x31, 0x36);
-    public static readonly Color Text = Color.FromArgb(0xE9, 0xEC, 0xEF);
+    // Title bar and window background.
+    public static readonly Color Bg = ThemeInfo.Bg;
+    public static readonly Color Surface = ThemeInfo.Surface;
+    public static readonly Color SurfaceHover = ThemeInfo.SurfaceHover;
+    public static readonly Color Line = ThemeInfo.Line;
+    public static readonly Color Text = ThemeInfo.Text;
+    public static readonly Color Muted = ThemeInfo.Muted;
+    public static readonly Color Accent = ThemeInfo.Accent;
+    public static readonly Color AccentHover = ThemeInfo.AccentHover;
+    public static readonly Color AccentText = ThemeInfo.AccentText;
+
+    public static string Hex(Color color)
+    {
+        return "#" + color.R.ToString("x2") + color.G.ToString("x2") + color.B.ToString("x2");
+    }
 }

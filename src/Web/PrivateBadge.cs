@@ -5,14 +5,14 @@ static class PrivateBadge
     // CSP cannot remove or restyle it.
     public const string Script = @"(function () {
     if (window.top !== window) return;
-    if (document.getElementById('__nextdns_private_badge')) return;
+    if (document.getElementById('__private_badge')) return;
 
     function add() {
         if (!document.documentElement) return;
-        if (document.getElementById('__nextdns_private_badge')) return;
+        if (document.getElementById('__private_badge')) return;
 
         var host = document.createElement('div');
-        host.id = '__nextdns_private_badge';
+        host.id = '__private_badge';
         host.setAttribute('role', 'img');
         host.setAttribute('aria-label', 'Private mode');
         host.style.setProperty('all', 'initial', 'important');

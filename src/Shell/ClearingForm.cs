@@ -10,7 +10,7 @@ sealed class ClearingForm : Form
         StartPosition = FormStartPosition.CenterScreen;
         ShowInTaskbar = false;
         TopMost = true;
-        BackColor = Theme.Accent;
+        BackColor = Theme.Bg;
         ClientSize = new Size(320, 112);
         Padding = new Padding(24);
 
@@ -23,7 +23,7 @@ sealed class ClearingForm : Form
 
         var note = new Label();
         note.Text = "Removing the browser profile before the app closes.";
-        note.ForeColor = Color.FromArgb(0xA8, 0xAF, 0xB5);
+        note.ForeColor = Theme.Muted;
         note.Font = new Font("Segoe UI", 9f);
         note.AutoSize = false;
         note.Size = new Size(272, 36);
@@ -36,7 +36,7 @@ sealed class ClearingForm : Form
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        using (var pen = new Pen(Color.FromArgb(0x3A, 0x40, 0x46)))
+        using (var pen = new Pen(Theme.Line))
             e.Graphics.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
     }
 }

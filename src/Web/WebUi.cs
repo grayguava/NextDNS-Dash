@@ -5,9 +5,9 @@ using Microsoft.Web.WebView2.Core;
 
 static class WebUi
 {
-    public const string LocalHost = "nextdns-dash.localhost";
-    public const string HomeUrl = "https://" + LocalHost + "/index.html";
-    public const string ConfigUrl = "https://" + LocalHost + "/config.html";
+    public static readonly string LocalHost = SiteProfile.LocalHost;
+    public static readonly string HomeUrl = "https://" + LocalHost + "/index.html";
+    public static readonly string ConfigUrl = "https://" + LocalHost + "/config.html";
 
     public static string UiDirectory
     {
